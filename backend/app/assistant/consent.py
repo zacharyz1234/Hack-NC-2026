@@ -1,3 +1,4 @@
+## Bryce and Claude
 """Consent for Gill Gates' protected reads. Denied by default: no matching, unrevoked grant means no read.
 
 Durations: "once" is never stored (the orchestrator runs that one call and audits it), "chat" is a

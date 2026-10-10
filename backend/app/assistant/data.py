@@ -1,3 +1,4 @@
+## Bryce and Claude
 """Read-only financial queries behind Gill Gates' tools.
 
 This is the only code the assistant uses to touch financial tables. Every function:

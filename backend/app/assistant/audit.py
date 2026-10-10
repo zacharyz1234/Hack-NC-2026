@@ -1,3 +1,5 @@
+## Bryce and Claude
+
 """Gill Gates audit trail: who, which tool or scope, what happened, when. Never amounts or descriptions."""
 from app.db import get_conn
 
