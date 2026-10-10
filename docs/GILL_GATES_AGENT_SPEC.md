@@ -1,7 +1,7 @@
 # Gill Gates — AI Assistant Specification
 
 > **Audience:** Human developers and coding agents contributing to the college student budgeting application.  
-> **Status:** Product behavior is based on team decisions discussed so far. Technical interfaces and schemas in this document are **proposals**, not existing repository contracts.  
+> **Status:** Implemented in `backend/`. How it actually works: `GILL_GATES_DESIGN.md`. What the frontend renders and sends: `GILL_GATES_FRONTEND_CONTRACT.md`. Where those differ from the proposals below, they win.  
 > **Scope:** The optional in-app AI assistant, its permissions, UI interactions, and experimentation workflow.
 
 ## 1. Product context
@@ -17,8 +17,8 @@ The application helps college students track income and expenses, plan monthly b
 3. Sensitive data includes at minimum **transaction history** and **account balances**. Consent must be separately controllable for each category.
 4. Gill Gates has **read-only** access to authorized information. It may **never** create, update, delete, or overwrite financial records.
 5. Gill Gates can ask conversational questions and invoke predefined tools that cause interactive components to appear in the React frontend (for example, “How much would you like to spend this month?” with a budget selector).
-6. The team's chosen use of **Project Nessie** is experimentation with the analytical data supplied to Gemini, to compare AI financial recommendations.
-7. The current proposed application stack includes **Python, SQLite (`sqlite3`), React, HTML/CSS/JavaScript, Gemini, ElevenLabs**, and Nessie. **FastAPI and Apache Iceberg** have been recommended but should be confirmed against the actual repo.
+6. **Nessie** means **Capital One's Nessie API**, the hackathon mock bank. It supplies accounts, purchases and deposits, which are synced into SQLite; Gill's tools read SQLite only. (An earlier draft treated it as Project Nessie, the Iceberg catalog; that idea was dropped.)
+7. The stack is **Python + FastAPI, SQLite (`sqlite3`), React (built in Lovable), Gemini (`google-genai`), ElevenLabs**, and Capital One Nessie. No Apache Iceberg.
 8. **Photon** is on the backlog, but its intended role has not yet been defined.
 
 ### Non-goals
@@ -26,7 +26,7 @@ The application helps college students track income and expenses, plan monthly b
 - Gill Gates is **not** a bank account operator or autonomous financial manager.
 - It cannot transfer funds, transact, submit purchases, or modify budgets or transactions.
 - It does not automatically ingest or inspect all user financial data merely because a chat was opened.
-- Nessie is not the live application's SQLite replacement, an authorization service, or a way to version each user's individual transactions.
+- Nessie is not read live by the assistant, and the assistant never triggers a bank sync.
 - Do not position generated responses as guaranteed financial, tax, legal, or investment advice.
 
 ## 2. User experience
@@ -103,20 +103,21 @@ React web app
   └── Whitelisted interactive components
               │
               ▼
-Python backend (FastAPI is a proposal)
+Python backend (FastAPI)
   ├── Authentication + user ownership verification
   ├── Consent/authorization service (deny by default)
   ├── Read-only financial query services
   ├── Agent orchestration + allowed tool dispatcher
   ├── Gemini integration (secrets held server-side)
   ├── ElevenLabs proxy / voice service (optional)
-  └── Financial analytics pipeline
+  └── Bank sync (student-triggered)
               │
        ┌──────┴─────────────────┐
        ▼                        ▼
-SQLite application DB     Iceberg analytical tables
-(users, expenses,         + Nessie versioned catalog
-balances, budgets)        (main, experiment branches)
+SQLite application DB  ◀──  Capital One Nessie sandbox
+(users, accounts,           (mock bank: accounts,
+expenses, income,           purchases, deposits;
+budgets, goals)             copied in by the sync)
 ```
 
 **Data flow requirement:** A protected read flows through authentication, consent verification, bounded read-only service, data minimization, and only then to the model. Do not expose database connections to the LLM.
@@ -131,15 +132,19 @@ Tools should have strictly defined input/output schemas, validated server-side. 
 | --- | --- | --- | --- |
 | `show_budget_slider` | Display monthly budget target input | None | UI only |
 | `show_category_picker` | Display spending category choices | None | UI only |
-| `show_savings_calculator` | Display calculation inputs/results | None when manual values used | UI only |
-| `compare_budget_scenarios` | Compare hypothetical allocations | None when manual values used | UI only |
+| `show_amount_form` | Ask for dollar amounts the student types (the manual route) | None | UI only |
+| `show_budget_plan` | Proposed budget card; the **student** may press Save | None | UI only |
+| `show_savings_calculator` | Display calculation inputs/results; the student may press Create goal | None | UI only |
+| `show_expense_draft` | Pre-filled expense; the student may press Add | None | UI only |
+| `show_scenario_comparison` | Compare hypothetical allocations (was `compare_budget_scenarios`; renamed so every tool is `get_*`/`show_*`) | None | UI only |
 | `get_spending_summary` | Fetch summarized expenses for a specified period | `transactions.summary.read` | Read-only |
 | `get_transaction_history` | Fetch narrowly scoped history when necessary | `transactions.history.read` | Read-only |
 | `get_account_balances` | Fetch account balances | `balances.read` | Read-only |
-| `get_budget_goals` | Fetch recorded goals | `budget_goals.read` | Read-only |
-| `show_spending_chart` | Request chart display using authorized data | Depends on source | UI only |
+| `get_budget_goals` | Fetch recorded budgets and goals | `budget_goals.read` | Read-only |
+| `get_budget_progress` | Budget limits vs. spending ("am I on track?") | `budget_goals.read` + `transactions.summary.read` | Read-only |
+| `show_spending_chart` | Request chart display using authorized data | Depends on chart | UI only |
 
-An example **illustrative** UI-tool result:
+The implemented schemas and results are in `GILL_GATES_DESIGN.md` §4, and the exact event format React receives is in `GILL_GATES_FRONTEND_CONTRACT.md`. The original **illustrative** UI-tool result:
 
 ```json
 {
@@ -183,21 +188,14 @@ Recommended backend protections: authenticated user identity from the session/to
 
 ## 6. How Nessie is used
 
-**Chosen use case:** **AI financial recommendation experiments.** Nessie supports branches/tags/commits for the *metadata references to Iceberg analytical tables*; it does not itself train Gemini or store the live SQLite database.
+**Nessie is Capital One's mock-bank API** (`api.nessieisreal.com`): the source of each student's accounts, balances, purchases and deposits.
 
-Suggested evaluation workflow:
+1. A student gets a sandbox bank with `POST /nessie/connect-demo` (or `scripts/seed_demo.py`). The sandbox customer is named "Demo Student", so no real names leave the app.
+2. `POST /nessie/sync` (the student's "Refresh bank data" button) copies accounts into `accounts`, purchases into `expenses` (`source = 'nessie'`) and deposits into `income`, deduped on `nessie_id`. Account numbers are never stored.
+3. Merchant categories are mapped onto the app's categories; unknown ones stay uncategorized.
+4. Gill's tools read SQLite only, and only with consent. The assistant never reads Nessie live and never triggers a sync.
 
-1. Create a synthetic or appropriately de-identified analytical dataset from SQLite transactions.
-2. Generate the **main** summary dataset (e.g., income, total expenses, category totals).
-3. Create an **experiment** branch and generate an enhanced version (e.g., category trends, recurring expense indicators).
-4. Ask the same test questions against both datasets using controlled Gemini prompts/model settings.
-5. Measure accuracy of amounts, personalization, actionable suggestions, harmful/unsupported assertions, latency, and cost.
-6. Record the Nessie commit/branch, dataset version, prompt version (in Git), model version, and evaluation results.
-7. After review, merge approved analytical dataset changes if appropriate. Deploy prompt/model logic independently; a Nessie merge does **not** deploy application code.
-
-**Example test question:** “I have $250 left after expenses. What are three realistic ways to save more this month?” The basic dataset may only contain total expenses; the experimental dataset could contain food/subscription trends. Compare recommendations against the same ground-truth test fixtures.
-
-The Nessie analytics path **never bypasses consent**. If any real student-derived data is involved, enforce consent/authorization before supplying individual-level results to the assistant, and avoid exposing identifiable analytics datasets to experiments by default. Prefer synthetic data during development and evaluation.
+Details, the category map and sandbox quirks: `GILL_GATES_DESIGN.md` §8. The earlier idea of Project Nessie + Iceberg branches for recommendation experiments was dropped. If the team wants recommendation experiments later, they can compare prompt versions (`PROMPT_VERSION`) on the same synthetic data, with no extra infrastructure.
 
 ## 7. Financial-response behavior
 
@@ -243,11 +241,11 @@ The Nessie analytics path **never bypasses consent**. If any real student-derive
 - Evaluation fixtures and automated tests for math, relevance, and access policy.
 - Clear distinction between information, estimates, and suggestions.
 
-### Phase 4 — Nessie experiments
-- Iceberg + Nessie proof of concept with synthetic data.
-- Main vs experimental data-summary branches.
-- Repeatable evaluation runs and reports.
-- Approval criteria and promotion workflow for analytical datasets.
+### Phase 4 — Bank data from Nessie
+- Capital One Nessie sandbox → SQLite sync, student-triggered, deduped.
+- "Connect demo bank" for any account; offline synthetic seed for demos without network.
+
+**Backend status:** phases 1–4 are implemented in `backend/` (voice included). The frontend is being built in Lovable against `GILL_GATES_FRONTEND_CONTRACT.md`.
 
 ## 10. Acceptance criteria for coding agents
 
@@ -263,19 +261,24 @@ The Nessie analytics path **never bypasses consent**. If any real student-derive
 - [ ] Gemini and ElevenLabs secrets are not present in frontend code.
 - [ ] Data sent to Gemini is the minimum needed to answer the user's question.
 - [ ] Denied consent still leads to a useful manual-input interaction.
-- [ ] Nessie experiments run on synthetic/de-identified analytical data and do not change live SQLite records.
-- [ ] Evaluation records identify the dataset version and model/prompt configuration.
+- [ ] Bank data enters only through the student-triggered Nessie sync; the assistant can't trigger it, and re-syncing doesn't duplicate records.
+- [ ] Each chat records the model and prompt version it ran with.
 
-## 11. Open decisions requiring team confirmation
+Backend tests covering these criteria: `GILL_GATES_DESIGN.md` §10 (`cd backend && pytest`).
 
-- Exact Python web framework (FastAPI was recommended, not confirmed).
-- Authentication/account model and whether actual bank connections are in scope.
-- Consent lifetimes, storage, revocation mechanics, and privacy/retention policy.
-- Whether to store chat history and for how long.
-- Whether ElevenLabs voice is on by default, opt-in per response, or configured in settings.
-- The exact UI tool message protocol and rendering framework.
-- Analytics execution engine (e.g., Spark) and where Iceberg/Nessie will run.
-- Ownership of prompt/model evaluation and approval before promotion.
+## 11. Decisions
+
+**Settled** (details in `GILL_GATES_DESIGN.md`):
+- Framework: FastAPI. Accounts: the existing bearer-token auth, with guests allowed. Bank connections: Capital One Nessie sandbox only, no real banks.
+- Consent: Allow once / Allow for this chat / Always allow / No thanks. Grants are stored in `assistant_consents`. Turning access off revokes grants and clears chats that used the data.
+- Chat history: kept server-side only while a chat is active; deleted after 24h idle or on "clear chat".
+- Voice: off by default; a toggle in settings plus a speaker button per message.
+- UI protocol: the event list in `GILL_GATES_FRONTEND_CONTRACT.md`.
+- Gemini: `generate_content` (stateless, we keep the transcript), `gemini-3.8-flash` with `gemini-3.5-flash-lite` as fallback.
+
+**Still open:**
+- Whether to show the merchant-category map (`nessie_sync.CATEGORY_MAP`) in the UI and let students re-categorize.
+- Who reviews prompt changes (`PROMPT_VERSION`) before a demo.
 - Meaning and planned integration of **Photon**.
 
 ## 12. Guidance for future coding agents

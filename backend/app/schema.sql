@@ -1,12 +1,13 @@
 --- Created by Bryce and Garrett
 
---- Table for users
+--- Table for users. nessie_customer_id links the user to a Capital One Nessie sandbox customer
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY,
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     display_name TEXT,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    nessie_customer_id TEXT
 );
 
 
@@ -45,7 +46,7 @@ INSERT OR IGNORE INTO categories (name) VALUES
     ('Debt payments');
 
 
---- income
+--- income: nessie_id is set for deposits imported from Nessie
 CREATE TABLE IF NOT EXISTS income (
     id INTEGER PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -53,7 +54,8 @@ CREATE TABLE IF NOT EXISTS income (
     amount_cents INTEGER NOT NULL,
     frequency TEXT NOT NULL DEFAULT 'once'
         CHECK (frequency IN ('once', 'weekly', 'biweekly', 'monthly')),
-    received_on TEXT NOT NULL
+    received_on TEXT NOT NULL,
+    nessie_id TEXT UNIQUE
 );
 
 
@@ -91,3 +93,61 @@ CREATE TABLE IF NOT EXISTS savings_goals (
     target_date TEXT
 );
 
+
+--- bank accounts copied from the Capital One Nessie sandbox (see app/services/nessie_sync.py)
+CREATE TABLE IF NOT EXISTS accounts (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    nessie_id TEXT UNIQUE,
+    type TEXT NOT NULL,
+    nickname TEXT,
+    balance_cents INTEGER NOT NULL,
+    synced_at TEXT NOT NULL
+);
+
+
+--- Gill Gates chats. transcript, pending and meta are JSON (see app/assistant/orchestrator.py).
+--- user_id NULL = guest. Rows are deleted after ASSISTANT_SESSION_TTL_HOURS without activity.
+CREATE TABLE IF NOT EXISTS assistant_sessions (
+    id TEXT PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    state TEXT NOT NULL DEFAULT 'ready'
+        CHECK (state IN ('ready', 'awaiting_input', 'awaiting_consent')),
+    transcript TEXT NOT NULL DEFAULT '[]',
+    pending TEXT,
+    meta TEXT NOT NULL DEFAULT '{}',
+    model TEXT NOT NULL,
+    prompt_version TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+
+--- Gill Gates consent grants. No row = denied. "Allow once" is only audited, never stored here.
+--- duration 'chat' is tied to one session and disappears with it; 'always' lasts until revoked.
+CREATE TABLE IF NOT EXISTS assistant_consents (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    scope TEXT NOT NULL CHECK (scope IN (
+        'budget_goals.read', 'transactions.summary.read', 'transactions.history.read', 'balances.read'
+    )),
+    duration TEXT NOT NULL CHECK (duration IN ('chat', 'always')),
+    session_id TEXT REFERENCES assistant_sessions(id) ON DELETE CASCADE,
+    max_lookback_days INTEGER NOT NULL DEFAULT 0,
+    granted_at TEXT NOT NULL,
+    revoked_at TEXT
+);
+CREATE INDEX IF NOT EXISTS assistant_consents_user_scope ON assistant_consents(user_id, scope);
+
+
+--- Gill Gates audit log: what happened and when. Never amounts, balances or descriptions.
+CREATE TABLE IF NOT EXISTS assistant_audit_log (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    session_id TEXT,
+    event TEXT NOT NULL,
+    tool TEXT,
+    scope TEXT,
+    outcome TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
