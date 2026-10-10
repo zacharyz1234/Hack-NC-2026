@@ -39,15 +39,32 @@ import { MoneyChart } from "@/components/money-chart";
 import { StockMarket } from "@/components/stock-market";
 import { GillChat } from "@/components/gill-chat";
 import { AuthPanel } from "@/components/auth-panel";
-import { supabase } from "@/integrations/supabase/client";
 import {
   demoTransactions,
   balance,
   spending,
   money,
-  categories,
+  categories as demoCategories,
   type Transaction,
 } from "@/lib/finance";
+import {
+  api,
+  cents,
+  currentUser,
+  dollars,
+  logout,
+  onAuthChange,
+  thisMonth,
+  today,
+  type Account,
+  type ApiTransaction,
+  type BudgetLimit,
+  type Category,
+  type ConsentStatus,
+  type Goal,
+  type SyncResult,
+  type User,
+} from "@/lib/api";
 import { GillSpeaker } from "@/components/gill-speaker";
 import landscape from "@/assets/new-york-aero.jpg";
 import bowl from "@/assets/gill-bowl.png";
@@ -106,7 +123,9 @@ function Index() {
   const [chat, setChat] = useState(false);
   const [question, setQuestion] = useState("");
   const [muted, setMuted] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const userId = user?.id ?? null;
+  const [goalId, setGoalId] = useState<number | null>(null);
   const [goalName, setGoalName] = useState("Summer adventure fund");
   const [goal, setGoal] = useState(2000);
   const [saved, setSaved] = useState(1250);
@@ -121,22 +140,84 @@ function Index() {
     Transport: 100,
     Subscriptions: 50,
   });
+  // Signed in: real data from the backend. Guests keep the demo ledger above.
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [apiCategories, setApiCategories] = useState<Category[]>([]);
+  const [consents, setConsents] = useState<ConsentStatus[]>([]);
+  const [notice, setNotice] = useState("");
   const [clock, setClock] = useState("2:48 PM");
+  const categories = user ? apiCategories.map((c) => c.name) : demoCategories;
+  const categoryId = (name: string) => apiCategories.find((c) => c.name === name)?.id ?? null;
+  async function loadData() {
+    try {
+      const [acc, tx, cats, limits, goals, perms] = await Promise.all([
+        api<{ accounts: Account[] }>("/accounts"),
+        api<{ transactions: ApiTransaction[] }>("/transactions"),
+        api<{ categories: Category[] }>("/categories"),
+        api<{ limits: BudgetLimit[] }>(`/budgets/${thisMonth()}`),
+        api<{ goals: Goal[] }>("/savings-goals"),
+        api<{ consents: ConsentStatus[] }>("/consents"),
+      ]);
+      setAccounts(acc.accounts);
+      setTransactions(
+        tx.transactions.map((t) => ({
+          id: t.id,
+          merchant: t.description ?? "(no description)",
+          category: t.category ?? "Uncategorized",
+          amount: dollars(t.amount_cents),
+          date: t.date.slice(0, 10),
+          account: t.account_type?.toLowerCase() === "savings" ? "savings" : "checking",
+          categoryId: t.category_id,
+          accountId: t.account_id,
+        })),
+      );
+      setApiCategories(cats.categories);
+      setBudget(Object.fromEntries(limits.limits.map((l) => [l.category, dollars(l.limit_cents)])));
+      const first = goals.goals[0];
+      setGoalId(first?.id ?? null);
+      setGoalName(first?.name ?? "");
+      setGoal(first ? dollars(first.target_cents) : 0);
+      setSaved(first ? dollars(first.saved_cents) : 0);
+      setConsents(perms.consents);
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : "Couldn't load your money data.");
+    }
+  }
+  function resetDemo() {
+    setAccounts([]);
+    setTransactions(demoTransactions);
+    setGoalId(null);
+    setSaved(1250);
+    setGoal(2000);
+    setGoalName("Summer adventure fund");
+  }
+  async function refreshUser() {
+    const me = await currentUser();
+    setUser(me);
+    if (me) await loadData();
+    else resetDemo();
+  }
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setUserId(data.session?.user.id ?? null));
-    const { data } = supabase.auth.onAuthStateChange((_event, session) =>
-      setUserId(session?.user.id ?? null),
-    );
+    refreshUser();
+    const unsubscribe = onAuthChange(refreshUser);
     const timer = setInterval(
       () =>
         setClock(new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })),
       60000,
     );
     return () => {
-      data.subscription.unsubscribe();
+      unsubscribe();
       clearInterval(timer);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    // permissions change inside the chat, so refresh them whenever Settings opens
+    if (modal === "Settings" && user)
+      api<{ consents: ConsentStatus[] }>("/consents")
+        .then((r) => setConsents(r.consents))
+        .catch(() => undefined);
+  }, [modal, user]);
   useEffect(() => {
     function close(e: KeyboardEvent) {
       if (e.key === "Escape") {
@@ -147,9 +228,12 @@ function Index() {
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
   }, []);
-  const checking = balance(transactions, "checking");
-  const savings = balance(transactions, "savings");
-  const spent = spending(transactions);
+  const accountBalance = (type: string) =>
+    dollars(accounts.filter((a) => a.type.toLowerCase() === type).reduce((sum, a) => sum + a.balance_cents, 0));
+  const checking = user ? accountBalance("checking") : balance(transactions, "checking");
+  const savings = user ? accountBalance("savings") : balance(transactions, "savings");
+  const monthTransactions = transactions.filter((t) => t.date.startsWith(thisMonth()));
+  const spent = spending(user ? monthTransactions : transactions);
   const filtered = transactions.filter(
     (t) =>
       (category === "All" || t.category === category) &&
@@ -178,22 +262,79 @@ function Index() {
     } else if (name === "Stocks") enterStocks();
     else setModal(name);
   }
-  function refreshUser() {
-    supabase.auth.getSession().then(({ data }) => {
-      setUserId(data.session?.user.id ?? null);
-      setModal(null);
-    });
+  function signedIn() {
+    setModal(null); // login() fires onAuthChange, which reloads the data
   }
   function newTransaction(account: "checking" | "savings" = "checking") {
     setEdit({
       id: "",
       merchant: "",
-      category: account === "savings" ? "Savings" : "Food & Drink",
+      category: user ? (categories[0] ?? "") : account === "savings" ? "Savings" : "Food & Drink",
       amount: 0,
-      date: "2026-10-10",
+      date: today(),
       account,
     });
     setModal("Add transaction");
+  }
+  // Signed in: save through the backend, then reload. Guests: edit the demo ledger in memory.
+  async function saveTransaction(t: Transaction) {
+    if (!user) {
+      setTransactions((prev) =>
+        t.id ? prev.map((x) => (x.id === t.id ? t : x)) : [{ ...t, id: crypto.randomUUID() }, ...prev],
+      );
+      return;
+    }
+    const accountId = accounts.find((a) => a.type.toLowerCase() === t.account)?.id ?? null;
+    const body = {
+      description: t.merchant,
+      amount_cents: cents(t.amount),
+      date: t.date,
+      category_id: t.amount < 0 ? categoryId(t.category) : null,
+      account_id: accountId,
+    };
+    await api(t.id ? `/transactions/${t.id}` : "/transactions", t.id ? "PATCH" : "POST", body);
+    await loadData();
+  }
+  async function deleteTransaction(id: string) {
+    if (user) {
+      await api(`/transactions/${id}`, "DELETE");
+      await loadData();
+    } else setTransactions((prev) => prev.filter((t) => t.id !== id));
+  }
+  async function saveBudget(name: string, limit: number) {
+    const id = categoryId(name);
+    if (!user || id === null) return;
+    await api(`/budgets/${thisMonth()}`, "PUT", { limits: [{ category_id: id, limit_cents: cents(limit) }] }).catch(
+      (e: Error) => setNotice(e.message),
+    );
+  }
+  async function saveGoal() {
+    if (!user || !goalName.trim() || goal <= 0) return;
+    const body = { name: goalName, target_cents: cents(goal), saved_cents: cents(saved) };
+    try {
+      const result = await api<Goal>(goalId ? `/savings-goals/${goalId}` : "/savings-goals", goalId ? "PATCH" : "POST", body);
+      setGoalId(result.id);
+      setNotice("Goal saved.");
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : "Couldn't save the goal.");
+    }
+  }
+  async function bankAction(path: "/nessie/connect-demo" | "/nessie/sync") {
+    setNotice("Talking to the bank…");
+    try {
+      const result = await api<SyncResult>(path, "POST");
+      setNotice(
+        `Synced ${result.accounts} accounts, ${result.expenses_added} new purchases, ${result.income_added} new deposits.` +
+          (result.warnings.length ? ` (${result.warnings.join("; ")})` : ""),
+      );
+      await loadData();
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : "Bank sync failed.");
+    }
+  }
+  async function revokeConsent(scope: string) {
+    await api(`/consents/${scope}`, "DELETE").catch((e: Error) => setNotice(e.message));
+    await loadData();
   }
   function table(rows: Transaction[], editable = false) {
     return (
@@ -333,7 +474,7 @@ function Index() {
                 <>
                   <span>
                     <ShieldCheck size={10} className="inline mr-1" />
-                    Demo accounts • Not connected to a bank
+                    {user ? "Capital One Nessie sandbox • Not a real bank" : "Demo accounts • Not connected to a bank"}
                   </span>
                   <span>All systems swimming</span>
                 </>
@@ -341,9 +482,24 @@ function Index() {
             >
               <div className="section-heading">
                 <h2>A little clarity. A lot of possibility.</h2>
-                <span className="badge-demo">DEMO MODE</span>
+                <span className="badge-demo">{user ? "SANDBOX BANK" : "DEMO MODE"}</span>
               </div>
-              <p className="welcome-note">Welcome back, student. Here’s how your money is doing.</p>
+              <p className="welcome-note">
+                Welcome back, {user?.display_name || "student"}. Here’s how your money is doing.
+              </p>
+              {notice && (
+                <p className="welcome-note" role="status">
+                  {notice}
+                </p>
+              )}
+              {user && !accounts.length && (
+                <div className="saving-row mb-4">
+                  <span className="text-xs">No bank linked yet. Get a sandbox bank with sample accounts and purchases.</span>
+                  <Button variant="green" size="sm" onClick={() => bankAction("/nessie/connect-demo")}>
+                    Connect demo bank
+                  </Button>
+                </div>
+              )}
               <div className="account-grid">
                 {card(
                   "Checking Account",
@@ -635,9 +791,11 @@ function Index() {
             exit={{ x: -35, opacity: 0 }}
           >
             <GillChat
+              key={userId ?? "guest"}
               userId={userId}
               onClose={() => setChat(false)}
-              onSignedIn={refreshUser}
+              onSignIn={() => setModal("Sign in")}
+              onDataChanged={loadData}
               initialQuestion={question}
               muted={muted}
               onMute={() => setMuted(!muted)}
@@ -662,20 +820,20 @@ function Index() {
                 onClose={() => setModal(null)}
               >
                 {modal === "Sign in" ? (
-                  <AuthPanel onSuccess={refreshUser} />
+                  <AuthPanel onSuccess={signedIn} />
                 ) : modal === "Add transaction" || modal === "Edit transaction" ? (
                   edit && (
                     <form
-                      onSubmit={(e) => {
+                      onSubmit={async (e) => {
                         e.preventDefault();
                         if (!Number.isFinite(edit.amount) || edit.amount === 0) return;
-                        setTransactions((prev) =>
-                          edit.id
-                            ? prev.map((t) => (t.id === edit.id ? edit : t))
-                            : [{ ...edit, id: crypto.randomUUID() }, ...prev],
-                        );
-                        setModal("Recent Purchases");
-                        setEdit(null);
+                        try {
+                          await saveTransaction(edit);
+                          setModal("Recent Purchases");
+                          setEdit(null);
+                        } catch (err) {
+                          setNotice(err instanceof Error ? err.message : "Couldn't save the transaction.");
+                        }
                       }}
                     >
                       <div className="form-grid">
@@ -758,8 +916,8 @@ function Index() {
                           <Button
                             variant="destructive"
                             type="button"
-                            onClick={() => {
-                              setTransactions((prev) => prev.filter((t) => t.id !== edit.id));
+                            onClick={async () => {
+                              await deleteTransaction(edit.id).catch((err: Error) => setNotice(err.message));
                               setModal("Recent Purchases");
                             }}
                           >
@@ -776,7 +934,7 @@ function Index() {
                   )
                 ) : modal === "Savings" ? (
                   <>
-                    <span className="badge-demo">DEMO SAVINGS ACCOUNT</span>
+                    <span className="badge-demo">{user ? "SAVINGS ACCOUNT" : "DEMO SAVINGS ACCOUNT"}</span>
                     <div className="money-summary">{money(savings)}</div>
                     <div className="flex gap-2">
                       <Button variant="green" onClick={() => newTransaction("savings")}>
@@ -827,6 +985,12 @@ function Index() {
                     <p className="text-xs mt-2">
                       {money(Math.max(0, goal - saved))} to go. You’ve got this.
                     </p>
+                    {user && (
+                      <Button variant="aero" size="sm" className="mt-3" onClick={saveGoal}>
+                        <Check />
+                        {goalId ? "Save goal" : "Create goal"}
+                      </Button>
+                    )}
                     <h3 className="mt-5 mb-3 font-bold">Savings activity</h3>
                     {table(
                       transactions.filter((t) => t.account === "savings"),
@@ -836,9 +1000,19 @@ function Index() {
                 ) : modal === "Budgeting" ? (
                   <>
                     <h3 className="text-lg font-bold mb-2">Give every dollar a destination.</h3>
-                    <p className="text-xs text-muted-foreground mb-4">October budget • Demo data</p>
-                    {Object.entries(budget).map(([name, limit]) => {
-                      const total = transactions
+                    <p className="text-xs text-muted-foreground mb-4">
+                      {user
+                        ? `${new Date().toLocaleString("en-US", { month: "long" })} budget • changes save when you leave a field`
+                        : "October budget • Demo data"}
+                    </p>
+                    {(user
+                      ? // every category with a limit or with spending this month (0 = no limit yet)
+                        categories
+                          .filter((c) => c in budget || monthTransactions.some((t) => t.category === c && t.amount < 0))
+                          .map((c) => [c, budget[c] ?? 0] as const)
+                      : Object.entries(budget)
+                    ).map(([name, limit]) => {
+                      const total = (user ? monthTransactions : transactions)
                         .filter((t) => t.category === name && t.amount < 0)
                         .reduce((s, t) => s - t.amount, 0);
                       return (
@@ -851,22 +1025,25 @@ function Index() {
                                 aria-label={`${name} budget`}
                                 className="xp-input"
                                 type="number"
-                                min="1"
+                                min={user ? 0 : 1}
                                 value={limit}
                                 onChange={(e) =>
                                   setBudget((b) => ({
                                     ...b,
-                                    [name]: Math.max(1, Number(e.target.value)),
+                                    [name]: Math.max(user ? 0 : 1, Number(e.target.value)),
                                   }))
                                 }
+                                onBlur={() => saveBudget(name, limit)}
                               />
                             </span>
                           </div>
                           <div className="card-progress">
-                            <span style={{ width: `${Math.min(100, (total / limit) * 100)}%` }} />
+                            <span style={{ width: `${limit ? Math.min(100, (total / limit) * 100) : 0}%` }} />
                           </div>
-                          <small className={total > limit ? "negative" : "positive"}>
-                            {total > limit
+                          <small className={limit && total > limit ? "negative" : "positive"}>
+                            {!limit
+                              ? "No limit set yet"
+                              : total > limit
                               ? `${money(total - limit)} over budget`
                               : `${money(limit - total)} remaining`}
                           </small>
@@ -888,8 +1065,8 @@ function Index() {
                 ) : modal === "Spending" ? (
                   <>
                     <div className="section-heading">
-                      <h2>October spending</h2>
-                      <span className="badge-demo">DEMO</span>
+                      <h2>{user ? new Date().toLocaleString("en-US", { month: "long" }) : "October"} spending</h2>
+                      <span className="badge-demo">{user ? "THIS MONTH" : "DEMO"}</span>
                     </div>
                     <div className="money-summary">{money(spent)}</div>
                     <MoneyChart />
@@ -898,7 +1075,7 @@ function Index() {
                         Income:{" "}
                         <strong className="positive">
                           {money(
-                            transactions
+                            (user ? monthTransactions : transactions)
                               .filter((t) => t.account === "checking" && t.amount > 0)
                               .reduce((s, t) => s + t.amount, 0),
                           )}
@@ -908,14 +1085,14 @@ function Index() {
                         Expenses: <strong>{money(spent)}</strong>
                       </span>
                     </div>
-                    {categories
-                      .filter((c) => transactions.some((t) => t.category === c && t.amount < 0))
+                    {[...categories, "Uncategorized"]
+                      .filter((c) => (user ? monthTransactions : transactions).some((t) => t.category === c && t.amount < 0))
                       .map((c) => (
                         <div className="market-row" key={c}>
                           <strong>{c}</strong>
                           <span>
                             {money(
-                              transactions
+                              (user ? monthTransactions : transactions)
                                 .filter((t) => t.category === c && t.amount < 0)
                                 .reduce((s, t) => s - t.amount, 0),
                             )}
@@ -980,37 +1157,70 @@ function Index() {
                         variant="aero"
                         onClick={async () => {
                           if (userId) {
-                            await supabase.auth.signOut();
-                            setUserId(null);
+                            await logout();
+                            setModal(null);
                           } else setModal("Sign in");
                         }}
                       >
                         {userId ? "Sign out" : "Sign in"}
                       </Button>
                     </div>
-                    <div className="settings-row">
-                      <span>Demo financial data</span>
-                      <Button
-                        variant="soft"
-                        onClick={() => {
-                          setTransactions(demoTransactions);
-                          setSaved(1250);
-                          setGoal(2000);
-                          setGoalName("Summer adventure fund");
-                        }}
-                      >
-                        Reset demo
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-4">
-                      Account data here is fictional. Financial edits reset on refresh; only Gill’s
-                      signed-in conversation is saved.
-                    </p>
+                    {user ? (
+                      <>
+                        <div className="settings-row">
+                          <span>Bank data (Capital One Nessie sandbox)</span>
+                          <Button
+                            variant="soft"
+                            onClick={() => bankAction(accounts.length ? "/nessie/sync" : "/nessie/connect-demo")}
+                          >
+                            {accounts.length ? "Refresh bank data" : "Connect demo bank"}
+                          </Button>
+                        </div>
+                        <h3 className="mt-4 font-bold">What Gill may read</h3>
+                        {consents.map((c) => (
+                          <div className="settings-row" key={c.scope}>
+                            <span>
+                              <strong>{c.title}</strong>
+                              <br />
+                              <small className="text-muted-foreground">
+                                {c.status === "always"
+                                  ? "Always allowed"
+                                  : c.status === "chat"
+                                    ? "Allowed in an open chat"
+                                    : "Off — Gill asks first"}
+                              </small>
+                            </span>
+                            {c.status !== "off" && (
+                              <Button variant="soft" size="sm" onClick={() => revokeConsent(c.scope)}>
+                                Turn off
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                        <p className="text-xs text-muted-foreground mt-4">
+                          Turning access off stops Gill from reading it again and clears chats that used it. It
+                          can’t recall what was already sent to Google Gemini.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="settings-row">
+                          <span>Demo financial data</span>
+                          <Button variant="soft" onClick={resetDemo}>
+                            Reset demo
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-4">
+                          You’re browsing the demo: numbers are fictional and edits reset on refresh. Sign in to
+                          use your own budget, goals and sandbox bank.
+                        </p>
+                      </>
+                    )}
                   </>
                 ) : (
                   <>
                     <div className="flex justify-between items-center">
-                      <span className="badge-demo">DEMO ACCOUNT • NOT A REAL BANK</span>
+                      <span className="badge-demo">{user ? "SANDBOX BANK • NOT A REAL BANK" : "DEMO ACCOUNT • NOT A REAL BANK"}</span>
                       <Button variant="aero" size="sm" onClick={() => newTransaction()}>
                         <Plus />
                         Add transaction

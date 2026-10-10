@@ -43,6 +43,8 @@ def init_db() -> None:
 def _migrate(conn: sqlite3.Connection) -> None:
     """Add columns that schema.sql gained after a local app.db was first created."""
     _add_column(conn, "users", "nessie_customer_id", "TEXT")
+    for table in ("expenses", "income"):
+        _add_column(conn, table, "account_id", "INTEGER REFERENCES accounts(id) ON DELETE SET NULL")
     if _add_column(conn, "income", "nessie_id", "TEXT"):
         # SQLite can't ADD a UNIQUE column, so the uniqueness comes from an index instead
         conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS income_nessie_id ON income(nessie_id)")

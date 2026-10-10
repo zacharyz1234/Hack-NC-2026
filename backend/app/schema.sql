@@ -46,7 +46,7 @@ INSERT OR IGNORE INTO categories (name) VALUES
     ('Debt payments');
 
 
---- income: nessie_id is set for deposits imported from Nessie
+--- income: nessie_id is set for deposits imported from Nessie. account_id (both tables) = the bank account, if known
 CREATE TABLE IF NOT EXISTS income (
     id INTEGER PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -55,7 +55,8 @@ CREATE TABLE IF NOT EXISTS income (
     frequency TEXT NOT NULL DEFAULT 'once'
         CHECK (frequency IN ('once', 'weekly', 'biweekly', 'monthly')),
     received_on TEXT NOT NULL,
-    nessie_id TEXT UNIQUE
+    nessie_id TEXT UNIQUE,
+    account_id INTEGER REFERENCES accounts(id) ON DELETE SET NULL
 );
 
 
@@ -68,7 +69,8 @@ CREATE TABLE IF NOT EXISTS expenses (
     description TEXT,
     spent_on TEXT NOT NULL,
     source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual', 'nessie')),
-    nessie_id TEXT UNIQUE
+    nessie_id TEXT UNIQUE,
+    account_id INTEGER REFERENCES accounts(id) ON DELETE SET NULL
 );
 
 

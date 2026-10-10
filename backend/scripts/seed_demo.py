@@ -54,19 +54,23 @@ def seed_offline_bank(user_id: int) -> None:
                 (user_id, f"offline-savings-{user_id}", "Savings", "Rainy Day", 500000, synced_at),
             ],
         )
+        checking_id = conn.execute(
+            "SELECT id FROM accounts WHERE nessie_id = ?", (f"offline-checking-{user_id}",)
+        ).fetchone()[0]
         for i in range(24):
             description, category, low, high = rng.choice(OFFLINE_PURCHASES)
             conn.execute(
-                "INSERT OR IGNORE INTO expenses (user_id, category_id, amount_cents, description, spent_on, source, nessie_id)"
-                " VALUES (?, ?, ?, ?, ?, 'nessie', ?)",
+                "INSERT OR IGNORE INTO expenses"
+                " (user_id, category_id, amount_cents, description, spent_on, source, nessie_id, account_id)"
+                " VALUES (?, ?, ?, ?, ?, 'nessie', ?, ?)",
                 (user_id, ids[category], round(rng.uniform(low, high) * 100), description,
-                 (today - timedelta(days=i * 2)).isoformat(), f"offline-{user_id}-{i}"),
+                 (today - timedelta(days=i * 2)).isoformat(), f"offline-{user_id}-{i}", checking_id),
             )
         for i, days_ago in enumerate((1, 15, 29, 43)):
             conn.execute(
-                "INSERT OR IGNORE INTO income (user_id, source, amount_cents, frequency, received_on, nessie_id)"
-                " VALUES (?, 'Paycheck', 100000, 'biweekly', ?, ?)",
-                (user_id, (today - timedelta(days=days_ago)).isoformat(), f"offline-pay-{user_id}-{i}"),
+                "INSERT OR IGNORE INTO income (user_id, source, amount_cents, frequency, received_on, nessie_id, account_id)"
+                " VALUES (?, 'Paycheck', 100000, 'biweekly', ?, ?, ?)",
+                (user_id, (today - timedelta(days=days_ago)).isoformat(), f"offline-pay-{user_id}-{i}", checking_id),
             )
 
 

@@ -4,7 +4,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.assistant.sessions import purge_expired
 from app.config import CORS_ORIGIN_REGEX
 from app.db import init_db
-from app.routes import assistant, auth, budgets, categories, consents, expenses, health, nessie, savings_goals
+from app.routes import (
+    accounts,
+    assistant,
+    auth,
+    budgets,
+    categories,
+    consents,
+    expenses,
+    health,
+    nessie,
+    savings_goals,
+    transactions,
+)
 
 app = FastAPI(title="Hack-NC-2026")
 
@@ -18,6 +30,8 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(categories.router)
+app.include_router(accounts.router)
+app.include_router(transactions.router)
 app.include_router(budgets.router)
 app.include_router(savings_goals.router)
 app.include_router(expenses.router)

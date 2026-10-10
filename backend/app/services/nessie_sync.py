@@ -74,9 +74,11 @@ def sync_user(user_id: int) -> dict:
                     merchants[merchant_id] = nessie.get_merchant(merchant_id)
                 except nessie.NessieError:
                     merchants[merchant_id] = {}
-            purchases.append(purchase)
+            purchases.append((account["_id"], purchase))
         deposits += [
-            d for d in nessie.get_deposits(account["_id"]) if d.get("status") != "cancelled" and d.get("transaction_date")
+            (account["_id"], d)
+            for d in nessie.get_deposits(account["_id"])
+            if d.get("status") != "cancelled" and d.get("transaction_date")
         ]
 
     synced_at = now_iso()
@@ -93,23 +95,27 @@ def sync_user(user_id: int) -> dict:
                 (user_id, account["_id"], account.get("type", "Account"), account.get("nickname"),
                  round(account.get("balance", 0) * 100), synced_at),
             )
-        for purchase in purchases:
+        account_ids = {
+            r["nessie_id"]: r["id"] for r in conn.execute("SELECT id, nessie_id FROM accounts WHERE user_id = ?", (user_id,))
+        }
+        for account_nessie_id, purchase in purchases:
             merchant = merchants.get(purchase.get("merchant_id"), {})
             name = merchant.get("name") or purchase.get("description") or "Purchase"
             category = map_category(merchant.get("category"), name)
             cur = conn.execute(
-                "INSERT OR IGNORE INTO expenses (user_id, category_id, amount_cents, description, spent_on, source, nessie_id)"
-                " VALUES (?, ?, ?, ?, ?, 'nessie', ?)",
+                "INSERT OR IGNORE INTO expenses"
+                " (user_id, category_id, amount_cents, description, spent_on, source, nessie_id, account_id)"
+                " VALUES (?, ?, ?, ?, ?, 'nessie', ?, ?)",
                 (user_id, category_ids.get(category), round(purchase["amount"] * 100), name,
-                 purchase["purchase_date"][:10], purchase["_id"]),
+                 purchase["purchase_date"][:10], purchase["_id"], account_ids.get(account_nessie_id)),
             )
             expenses_added += cur.rowcount
-        for deposit in deposits:
+        for account_nessie_id, deposit in deposits:
             cur = conn.execute(
-                "INSERT OR IGNORE INTO income (user_id, source, amount_cents, frequency, received_on, nessie_id)"
-                " VALUES (?, ?, ?, 'once', ?, ?)",
+                "INSERT OR IGNORE INTO income (user_id, source, amount_cents, frequency, received_on, nessie_id, account_id)"
+                " VALUES (?, ?, ?, 'once', ?, ?, ?)",
                 (user_id, deposit.get("description") or "Deposit", round(deposit["amount"] * 100),
-                 deposit["transaction_date"][:10], deposit["_id"]),
+                 deposit["transaction_date"][:10], deposit["_id"], account_ids.get(account_nessie_id)),
             )
             income_added += cur.rowcount
     return {

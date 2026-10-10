@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
+import { login, register } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+// Accounts live in our FastAPI backend (/auth), not Supabase.
 export function AuthPanel({ onSuccess }: { onSuccess: () => void }) {
   const [signup, setSignup] = useState(false);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -12,37 +13,36 @@ export function AuthPanel({ onSuccess }: { onSuccess: () => void }) {
     e.preventDefault();
     setBusy(true);
     setError("");
-    const result = signup
-      ? await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: window.location.origin },
-        })
-      : await supabase.auth.signInWithPassword({ email, password });
-    setBusy(false);
-    if (result.error) setError(result.error.message);
-    else if (result.data.session) onSuccess();
-    else setError("Check your email to confirm your account, then sign in.");
+    try {
+      if (signup) await register(email, password, name);
+      else await login(email, password);
+      onSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sign in failed.");
+    } finally {
+      setBusy(false);
+    }
   }
   return (
     <div>
       <h3 className="mb-3 text-lg font-bold">
         {signup ? "Your Bowl Street account" : "Welcome back to Bowl Street"}
       </h3>
-      <Button
-        variant="soft"
-        className="w-full mb-3"
-        onClick={async () => {
-          const r = await lovable.auth.signInWithOAuth("google", {
-            redirect_uri: window.location.origin,
-          });
-          if (r.error) setError(r.error.message);
-          else if (!r.redirected) onSuccess();
-        }}
-      >
-        Continue with Google
-      </Button>
       <form onSubmit={submit}>
+        {signup && (
+          <>
+            <label className="field-label" htmlFor="auth-name">
+              Name (optional)
+            </label>
+            <input
+              className="xp-input"
+              id="auth-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="name"
+            />
+          </>
+        )}
         <label className="field-label" htmlFor="auth-email">
           Email address
         </label>
@@ -53,6 +53,7 @@ export function AuthPanel({ onSuccess }: { onSuccess: () => void }) {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
         />
         <label className="field-label" htmlFor="auth-password">
           Password
@@ -72,7 +73,12 @@ export function AuthPanel({ onSuccess }: { onSuccess: () => void }) {
             {error}
           </p>
         )}
-        <Button variant="aero" type="submit" className="w-full mt-4" disabled={busy}>
+        <Button
+          variant="aero"
+          type="submit"
+          className="w-full mt-4"
+          disabled={busy}
+        >
           {busy ? "Please wait…" : signup ? "Create account" : "Sign in"}
         </Button>
       </form>
@@ -86,22 +92,6 @@ export function AuthPanel({ onSuccess }: { onSuccess: () => void }) {
           }}
         >
           {signup ? "Already have an account?" : "Create an account"}
-        </Button>
-        <Button
-          variant="link"
-          size="sm"
-          onClick={async () => {
-            if (!email) {
-              setError("Enter your email address first.");
-              return;
-            }
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
-              redirectTo: window.location.origin,
-            });
-            setError(error?.message ?? "Password reset email sent.");
-          }}
-        >
-          Forgot password?
         </Button>
       </div>
     </div>

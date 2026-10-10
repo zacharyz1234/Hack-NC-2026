@@ -5,6 +5,9 @@ export type Transaction = {
   amount: number;
   date: string;
   account: "checking" | "savings";
+  // set for signed-in students (data from the backend); absent in the guest demo ledger
+  categoryId?: number | null;
+  accountId?: number | null;
 };
 export const demoTransactions: Transaction[] = [
   {

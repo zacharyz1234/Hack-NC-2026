@@ -62,6 +62,11 @@ def test_sync_copies_and_maps_and_dedupes(client, fake_nessie):
         {"type": "Savings", "nickname": "Rainy Day", "balance_cents": 500000},
     ]
     assert rows("SELECT source, amount_cents FROM income") == [{"source": "Paycheck", "amount_cents": 200000}]
+    # every imported row knows which account it came from (all fixtures are on checking)
+    assert rows(
+        "SELECT DISTINCT a.type FROM expenses e JOIN accounts a ON a.id = e.account_id"
+        " UNION SELECT DISTINCT a.type FROM income i JOIN accounts a ON a.id = i.account_id"
+    ) == [{"type": "Checking"}]
 
 
 def test_unreadable_purchases_skip_that_account_only(client, fake_nessie, monkeypatch):

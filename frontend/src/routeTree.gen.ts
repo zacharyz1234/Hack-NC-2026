@@ -10,53 +10,33 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiChatRouteImport } from './routes/api/chat'
-import { Route as ApiVoiceRouteImport } from './routes/api/voice'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiChatRoute = ApiChatRouteImport.update({
-  id: '/api/chat',
-  path: '/api/chat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiVoiceRoute = ApiVoiceRouteImport.update({
-  id: '/api/voice',
-  path: '/api/voice',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/api/chat': typeof ApiChatRoute
-  '/api/voice': typeof ApiVoiceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/api/chat': typeof ApiChatRoute
-  '/api/voice': typeof ApiVoiceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/api/chat': typeof ApiChatRoute
-  '/api/voice': typeof ApiVoiceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/chat' | '/api/voice'
+  fullPaths: '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/chat' | '/api/voice'
-  id: '__root__' | '/' | '/api/chat' | '/api/voice'
+  to: '/'
+  id: '__root__' | '/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ApiChatRoute: typeof ApiChatRoute
-  ApiVoiceRoute: typeof ApiVoiceRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -68,27 +48,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/chat': {
-      id: '/api/chat'
-      path: '/api/chat'
-      fullPath: '/api/chat'
-      preLoaderRoute: typeof ApiChatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/voice': {
-      id: '/api/voice'
-      path: '/api/voice'
-      fullPath: '/api/voice'
-      preLoaderRoute: typeof ApiVoiceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ApiChatRoute: ApiChatRoute,
-  ApiVoiceRoute: ApiVoiceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
