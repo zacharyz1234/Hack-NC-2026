@@ -12,3 +12,9 @@ photon
 
 Python, SQL-lite with sql-lite3
 html/css/javascript and react
+
+## frontend
+
+
+
+## backend
