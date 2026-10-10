@@ -415,16 +415,16 @@ Shown when Gill needs private data. One card can list several data types; each g
   "signed_in": true,
   "voice_available": true,
   "suggestions": [
-    "Help me plan this month's budget",
-    "Where could I cut spending?",
+    "Help me build this month's budget",
+    "Where can I reduce my spending?",
     "How much can I safely set aside?",
-    "How big should my emergency fund be?"
+    "How large should my emergency fund be?"
   ],
   "events": [
     {
       "type": "message",
       "message_id": "greeting",
-      "text": "Hi, I'm Gill! 🐟 I can help you plan a budget, find places to save, or explain money stuff. I only look at your financial info if you say it's okay."
+      "text": "Good day. I'm Gill Gates, and I've spent thirty years on Bowl Street. I can help you build a budget, find room to save, and work through your financial questions. I review your financial records only with your permission."
     }
   ]
 }
