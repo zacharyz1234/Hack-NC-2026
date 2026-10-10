@@ -27,17 +27,21 @@ log = logging.getLogger(__name__)
 MAX_MODEL_CALLS = 6
 MAX_TRANSCRIPT_ENTRIES = 60
 
+# Gill's voice: a composed professional with thirty years on Bowl Street (style rules in prompts.py).
+# I (bryce) felt like he was'nt professional and does'nt act like the expert in the field he is. So, I went in
+# and gave him a more professional feel. I also did this in prompts.py
 GREETING = (
-    "Hi, I'm Gill! 🐟 I can help you plan a budget, find places to save, or explain money stuff. "
-    "I only look at your financial info if you say it's okay."
+    "Good day. I'm Gill Gates, and I've spent thirty years on Bowl Street. I can help you build a budget, "
+    "find room to save, and work through your financial questions. "
+    "I review your financial records only with your permission."
 )
 SUGGESTIONS = [
-    "Help me plan this month's budget",
-    "Where could I cut spending?",
+    "Help me build this month's budget",
+    "Where can I reduce my spending?",
     "How much can I safely set aside?",
-    "How big should my emergency fund be?",
+    "How large should my emergency fund be?",
 ]
-FALLBACK = "Sorry, I got my fins tangled on that one. Could you ask it another way?"
+FALLBACK = "My apologies, I wasn't able to work that one through. Could you rephrase the question?"
 
 NOT_AVAILABLE_GUEST = {
     "status": "not_available",

@@ -91,6 +91,10 @@ def chat_step(
         # Blocked or empty (e.g. a safety stop): answer politely instead of failing the request.
         return types.Content(
             role="model",
-            parts=[types.Part.from_text(text="I can't help with that one, but I'm happy to help with budgeting!")],
+            parts=[
+                types.Part.from_text(
+                    text="I'm afraid I can't help with that request, but I'd be glad to help with your budget or savings."
+                )
+            ],
         )
     return candidate.content
