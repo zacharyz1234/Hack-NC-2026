@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import init_db
-from app.routes import health
+from app.routes import auth, health
 
 app = FastAPI(title="Hack-NC-2026")
 
@@ -14,6 +14,7 @@ app.add_middleware(
 )
 
 app.include_router(health.router)
+app.include_router(auth.router)
 
 
 @app.on_event("startup")

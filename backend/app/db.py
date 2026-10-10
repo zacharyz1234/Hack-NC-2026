@@ -3,6 +3,9 @@ from pathlib import Path
 
 from app.config import DB_PATH
 
+
+### Using sql lite
+
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
 
 
