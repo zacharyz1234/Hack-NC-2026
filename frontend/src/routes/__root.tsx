@@ -15,6 +15,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { stopWheelChangingNumbers } from "../lib/number-inputs";
 
 function NotFoundComponent() {
   return (
@@ -133,6 +134,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => stopWheelChangingNumbers(), []);
 
   return (
     <QueryClientProvider client={queryClient}>

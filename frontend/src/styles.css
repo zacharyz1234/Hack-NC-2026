@@ -278,3 +278,6 @@
 @media(max-width:900px){.quick-add-page{grid-template-columns:minmax(0,1fr)}}
 @container(max-width:380px){.quick-add-row{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:600px){.quick-add .xp-input,.gill-card .quick-add .xp-input{font-size:16px}.quick-add-chip{min-height:38px;font-size:13px}}
+/* No up/down arrows on number boxes anywhere: amounts are typed, not nudged a cent at a time. */
+input[type="number"]{-moz-appearance:textfield;appearance:textfield}
+input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
