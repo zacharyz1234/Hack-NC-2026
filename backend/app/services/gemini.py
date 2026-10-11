@@ -25,6 +25,10 @@ OVERLOADED = (429, *TRANSIENT)
 class GeminiUnavailable(Exception):
     """Gemini couldn't be reached or isn't configured. The rest of the app keeps working."""
 
+    def __init__(self, message: str, public_message: str | None = None):
+        super().__init__(message)
+        self.public_message = public_message
+
 
 _client: genai.Client | None = None
 
@@ -32,7 +36,7 @@ _client: genai.Client | None = None
 def _get_client() -> genai.Client:
     global _client
     if not GEMINI_API_KEY:
-        raise GeminiUnavailable("GEMINI_API_KEY is not set")
+        raise GeminiUnavailable("GEMINI_API_KEY is not set", "Gill's AI service API key is missing.")
     if _client is None:
         _client = genai.Client(
             api_key=GEMINI_API_KEY,
@@ -57,7 +61,16 @@ def _generate(contents, config: types.GenerateContentConfig | None = None) -> ty
             return _get_client().models.generate_content(model=model, contents=contents, config=config)
         except errors.APIError as exc:
             if exc.code not in OVERLOADED or i == len(models) - 1:
-                raise GeminiUnavailable(str(exc)) from exc
+                # Log only metadata, never provider messages that could contain credentials.
+                log.error("Gemini request failed: model=%s, status=%s", model, exc.code)
+                details = exc.details if isinstance(exc.details, dict) else {}
+                info = details.get("error", {})
+                reasons = info.get("details", []) if isinstance(info, dict) else []
+                reasons = reasons if isinstance(reasons, list) else []
+                invalid_key = any(isinstance(item, dict) and item.get("reason") == "API_KEY_INVALID"
+                                  for item in reasons)
+                public_message = "Gill's AI service API key is invalid." if invalid_key else None
+                raise GeminiUnavailable(str(exc), public_message) from exc
             log.warning("Gemini %s unavailable (%s); trying %s", model, exc.code, models[i + 1])
         except httpx.HTTPError as exc:
             raise GeminiUnavailable(str(exc)) from exc

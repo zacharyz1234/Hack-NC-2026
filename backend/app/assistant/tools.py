@@ -1,7 +1,7 @@
 """Gill Gates' tools: the complete list of things the model can ask the backend to do.
 
 Each tool is one of:
-- "data":    a consent-gated, read-only query (get_*);
+- "data":    a read-only query (get_*); private student data is consent-gated;
 - "input":   a card that asks the student for a value and pauses the turn (show_*);
 - "display": a card the backend fills in (show_*). Some have a button the *student* can press to
              save through the normal app API; the model itself can never save anything.
@@ -21,10 +21,11 @@ from typing import Annotated, Any, Literal
 from google.genai import types
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.assistant import data, lore
+from app.assistant import data, lore, stock_facts
 from app.assistant.periods import Period, add_months, month_key, month_label, months_between, resolve
 from app.assistant.scopes import BALANCES, BUDGET_GOALS, HISTORY, SCOPES, SUMMARY
 from app.db import readonly_conn
+from app.services.twelve_data import MarketDataError
 
 
 @dataclass
@@ -526,7 +527,50 @@ def _run_gill_background(ctx: ToolContext, args: GillBackgroundArgs) -> Outcome:
 
 # ---------- registry ----------
 
+
+def _stock_result(fetch, args) -> Outcome:
+    try:
+        return Outcome(result=fetch(args))
+    except MarketDataError as error:
+        raise ToolError("stock_data_unavailable", str(error), provider_status=error.status) from None
+
+
+def _run_stock_search(ctx: ToolContext, args: stock_facts.StockSearchArgs) -> Outcome:
+    return _stock_result(stock_facts.search, args)
+
+
+def _run_stock_quote(ctx: ToolContext, args: stock_facts.StockQuoteArgs) -> Outcome:
+    return _stock_result(stock_facts.quote, args)
+
+
+def _run_stock_comparison(ctx: ToolContext, args: stock_facts.StockComparisonArgs) -> Outcome:
+    if args.end_date > ctx.today:
+        raise ToolError("invalid_arguments", "Stock price dates cannot be in the future.")
+    return _stock_result(stock_facts.compare, args)
+
+
 _SPECS = [
+    ToolSpec(
+        "get_stock_search", "data",
+        "Resolve a company name or ticker to US stocks and ETFs using Twelve Data. Public information, "
+        "no student-data consent needed. Ask which listing if results are ambiguous. Facts only, never investment advice.",
+        stock_facts.StockSearchArgs, _run_stock_search,
+    ),
+    ToolSpec(
+        "get_stock_quote", "data",
+        "Get a verified US ticker's latest available USD price, dollar/percentage change from previous close, "
+        "market-open status and quote timestamp from Twelve Data. Public data; no consent needed. "
+        "Cached hourly, so disclose the quote time. Never recommend buying, selling or holding.",
+        stock_facts.StockQuoteArgs, _run_stock_quote,
+    ),
+    ToolSpec(
+        "get_stock_price_comparison", "data",
+        "Compare a US stock's daily closing prices on two explicit dates, up to ten years apart. "
+        "Returns both requested and actual session dates, dollar change, percentage change and direction. "
+        "Non-trading dates use the preceding available session within seven days; disclose substitutions. "
+        "Ask for missing years before calling. Public data; no consent needed. Facts only, never investment advice.",
+        stock_facts.StockComparisonArgs, _run_stock_comparison,
+    ),
     ToolSpec(
         "show_budget_slider", "input",
         "Show a slider so the student can pick their total spending target for the month. "

@@ -2,6 +2,7 @@
 // The backend decides what Gill may read (consent cards) and sends structured events we render here.
 import { useEffect, useRef, useState } from "react";
 import { ConsentCard, GillCard } from "./gill-cards";
+import { GillStockMessage } from "./gill-stock-message";
 import { Button } from "@/components/ui/button";
 import {
   Conversation,
@@ -11,7 +12,6 @@ import {
 import {
   Message,
   MessageContent,
-  MessageResponse,
 } from "@/components/ai-elements/message";
 import {
   PromptInput,
@@ -567,7 +567,7 @@ function EventView({
       return (
         <Message from="assistant">
           <MessageContent>
-            <MessageResponse>{event.text}</MessageResponse>
+            <GillStockMessage event={event} />
           </MessageContent>
         </Message>
       );

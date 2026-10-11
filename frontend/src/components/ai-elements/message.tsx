@@ -336,6 +336,7 @@ export const MessageResponse = memo(
   ),
   (prevProps, nextProps) =>
     prevProps.children === nextProps.children &&
+    prevProps.components === nextProps.components &&
     nextProps.isAnimating === prevProps.isAnimating
 );
 

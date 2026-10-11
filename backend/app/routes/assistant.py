@@ -54,8 +54,8 @@ def _turn(session_id: str, user: dict | None, step, *args) -> dict:
             return step(session, *args)
         except orchestrator.TurnError as exc:
             raise HTTPException(status_code=exc.status, detail=exc.detail) from None
-        except gemini.GeminiUnavailable:
-            raise HTTPException(status_code=503, detail=UNAVAILABLE) from None
+        except gemini.GeminiUnavailable as exc:
+            raise HTTPException(status_code=503, detail=exc.public_message or UNAVAILABLE) from None
 
 
 @router.post("/sessions")

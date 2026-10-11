@@ -29,7 +29,7 @@ from tests.conftest import (
 )
 
 QUESTION = "Where could I cut spending?"
-NO_STUDENT_DATA = {"get_gill_background"}  # get_* tools that read nothing of the student's, so need no consent
+NO_STUDENT_DATA = {"get_gill_background", "get_stock_search", "get_stock_quote", "get_stock_price_comparison"}
 
 
 def _summary_turn(client, fake_gemini, headers, sid, *, period="last_30_days"):

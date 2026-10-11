@@ -60,6 +60,11 @@ export type AssistantEvent =
 export interface MessageEvent {
   type: "message";
   message_id: string; // use for the speech endpoint
+  stock_numbers?: Array<{
+    value: number;
+    unit: "price" | "percent";
+    direction: "increased" | "decreased" | "unchanged";
+  }>; // verified stock tool values: bold matching numbers, green/red by direction
   text: string;
 }
 
