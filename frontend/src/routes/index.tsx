@@ -41,7 +41,7 @@ function Index() {
   );
   const [education, setEducation] = useState(false);
   const { user, accountBalance, transactions } = useFinance();
-  const { transition, openGill } = useGillNavigation();
+  const { openGill } = useGillNavigation();
   const month = user ? thisMonth() : DEMO_MONTH;
   const spent = spending(transactions.filter((t) => t.date.startsWith(month)));
   return (
@@ -145,7 +145,7 @@ function Index() {
             <Button
               variant="ghost"
               className="city-destination"
-              onClick={() => transition(() => setStockView(true))}
+              onClick={() => setStockView(true)}
               aria-label="Enter Bowl Street stock market"
             >
               <div className="city-overlay">

@@ -17,6 +17,7 @@ export function GillNavigationProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const reducedMotion = useReducedMotion();
   const [transitioning, setTransitioning] = useState(false);
+  const [transitionId, setTransitionId] = useState(0);
   const locked = useRef(false);
   const committing = useRef(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -26,8 +27,10 @@ export function GillNavigationProvider({ children }: { children: ReactNode }) {
     locked.current = false;
   };
   useEffect(() => {
-    const unsubscribe = router.subscribe("onBeforeNavigate", () => {
-      if (!committing.current) {
+    // Clear animation state carried over by a dev-server hot reload.
+    setTransitioning(false);
+    const unsubscribe = router.subscribe("onBeforeNavigate", (event) => {
+      if (!committing.current || event.toLocation.pathname !== "/gill") {
         clear();
         setTransitioning(false);
       }
@@ -36,10 +39,12 @@ export function GillNavigationProvider({ children }: { children: ReactNode }) {
       unsubscribe();
       clear();
     };
-  }, [router]);
+  }, [router, reducedMotion]);
   function transition(commit: () => void | Promise<unknown>) {
     if (locked.current) return;
+    clear();
     locked.current = true;
+    setTransitionId((id) => id + 1);
     setTransitioning(!reducedMotion);
     const perform = () => {
       committing.current = true;
@@ -95,12 +100,12 @@ export function GillNavigationProvider({ children }: { children: ReactNode }) {
     return [...rand(9, "out"), ...rand(9, "in")];
   }, []);
   return (
-    <NavigationContext.Provider value={{ transitioning, transition, openGill }}>
+    <NavigationContext.Provider value={{ transitioning, openGill }}>
       {children}
       <>
         {transitioning && (
           <motion.div
-            key="bowl-street-bubbles"
+            key={transitionId}
             className="bubble-transition"
             aria-hidden="true"
             initial={{ opacity: 1 }}

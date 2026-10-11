@@ -258,6 +258,22 @@ describe("finance pages", () => {
   });
 });
 describe("finance editing and reduced motion", () => {
+  it("skips bubbles on ordinary page navigation and browser Back", async () => {
+    const { router, history } = mount();
+    await screen.findByRole("button", { name: "Edit Campus Coffee" });
+    expect(document.querySelector(".bubble-transition")).toBeNull();
+    await act(() => router.navigate({ to: "/purchases" }));
+    expect(document.querySelector(".bubble-transition")).toBeNull();
+    await act(() => history.back());
+    expect(router.state.location.pathname).toBe("/accounts");
+    expect(document.querySelector(".bubble-transition")).toBeNull();
+  });
+  it("opens Bowl Street immediately without bubbles", async () => {
+    mount("/");
+    fireEvent.click(await screen.findByRole("button", { name: "Enter Bowl Street stock market" }));
+    expect(document.querySelector(".bubble-transition")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Enter Bowl Street stock market" })).not.toBeInTheDocument();
+  });
   it("adds and deletes guest activity without leaving the page", async () => {
     mount("/purchases");
     fireEvent.click(

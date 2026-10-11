@@ -15,7 +15,6 @@ export function safeReturn(value: unknown): ReturnDestination {
 }
 type Navigation = {
   transitioning: boolean;
-  transition: (commit: () => void | Promise<unknown>) => void;
   openGill: (returnTo: ReturnDestination, initialQuestion?: string) => void;
 };
 export const NavigationContext = createContext<Navigation | null>(null);
