@@ -126,7 +126,7 @@ function Index() {
   }, []);
   const [chat, setChat] = useState(false);
   const [question, setQuestion] = useState("");
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(true);
   const [quipsOn, setQuipsOn] = useState(true);
   useEffect(() => setQuipsOn(loadQuipsEnabled()), []); // read after mount so server and client markup match
   function toggleQuips() {

@@ -21,7 +21,7 @@ import {
   PromptInputSubmit,
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
-import { Fish, Mic, Volume2, VolumeX, Play, Square } from "lucide-react";
+import { Fish, Mic, Volume2, VolumeX, Square } from "lucide-react";
 import { api, apiAudio, ApiError } from "@/lib/api";
 import type {
   ConsentChoice,
@@ -63,10 +63,12 @@ export function GillChat({
   const [input, setInput] = useState(initialQuestion);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [playing, setPlaying] = useState(false);
   const [listening, setListening] = useState(false);
   const audio = useRef<AudioContext | null>(null);
   const source = useRef<AudioBufferSourceNode | null>(null);
+  const speechRequest = useRef(0);
+  const speakerMuted = useRef(muted);
+  speakerMuted.current = muted;
   const textarea = useRef<HTMLTextAreaElement | null>(null);
   const recognition = useRef<{ stop: () => void } | null>(null);
 
@@ -104,6 +106,7 @@ export function GillChat({
     start();
     textarea.current?.focus();
     return () => {
+      speechRequest.current++;
       recognition.current?.stop();
       source.current?.stop();
       if (audio.current && audio.current.state !== "closed")
@@ -116,8 +119,9 @@ export function GillChat({
 
   useEffect(() => {
     if (muted) {
+      speechRequest.current++;
       source.current?.stop();
-      setPlaying(false);
+      source.current = null;
     }
   }, [muted]);
 
@@ -131,6 +135,15 @@ export function GillChat({
     }: { before?: (items: Item[]) => Item[]; answered?: string } = {},
   ) {
     if (!sessionId || busy) return;
+    // Unlock audio during the send/card click, before awaiting Gill's reply.
+    if (!muted && voiceAvailable) {
+      const context = audio.current?.state !== "closed" ? audio.current : null;
+      audio.current = context ?? new AudioContext();
+      void audio.current.resume().catch(() => undefined);
+    }
+    speechRequest.current++;
+    source.current?.stop();
+    source.current = null;
     setBusy(true);
     setError("");
     if (before) setItems(before);
@@ -140,6 +153,9 @@ export function GillChat({
         "POST",
         body,
       );
+      const reply = [...turn.events].reverse().find((event) => event.type === "message");
+      if (reply?.type === "message" && voiceAvailable && !speakerMuted.current)
+        void speak(sessionId, reply.message_id);
       setItems((now) => [
         // a card counts as answered only once the backend accepted the answer
         ...now.map((item) =>
@@ -187,26 +203,9 @@ export function GillChat({
       }).catch(() => undefined);
   }
 
-  async function speak() {
-    setError("");
-    if (playing) {
-      source.current?.stop();
-      setPlaying(false);
-      return;
-    }
-    const last = [...items]
-      .reverse()
-      .find((item) => "event" in item && item.event.type === "message");
-    if (
-      !sessionId ||
-      !last ||
-      !("event" in last) ||
-      last.event.type !== "message"
-    )
-      return;
+  async function speak(chatSessionId: string, messageId: string) {
+    const requestId = ++speechRequest.current;
     try {
-      setPlaying(true);
-      // Resume while the Play click still has browser user activation.
       const context =
         audio.current && audio.current.state !== "closed"
           ? audio.current
@@ -214,10 +213,12 @@ export function GillChat({
       audio.current = context;
       await context.resume();
       const data = await apiAudio(
-        `/assistant/sessions/${sessionId}/messages/${last.event.message_id}/speech`,
+        `/assistant/sessions/${chatSessionId}/messages/${messageId}/speech`,
       );
+      if (requestId !== speechRequest.current || speakerMuted.current) return;
       // A restrained desktop-speaker sound; avoid bit crushing, which adds static.
       const decoded = await context.decodeAudioData(data);
+      if (requestId !== speechRequest.current || speakerMuted.current) return;
       const node = context.createBufferSource();
       node.buffer = decoded;
       node.playbackRate.value = 0.94;
@@ -246,7 +247,6 @@ export function GillChat({
       node.onended = () => {
         if (source.current === node) {
           source.current = null;
-          setPlaying(false);
         }
         node.disconnect();
         highpass.disconnect();
@@ -256,8 +256,8 @@ export function GillChat({
       };
       node.start();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Voice playback failed.");
-      setPlaying(false);
+      if (requestId === speechRequest.current && !speakerMuted.current)
+        setError(e instanceof Error ? e.message : "Voice playback failed.");
     }
   }
 
@@ -430,21 +430,6 @@ export function GillChat({
               title="Text-only mode"
             >
               {muted ? <VolumeX /> : <Volume2 />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              type="button"
-              onClick={speak}
-              disabled={muted || !voiceAvailable}
-              aria-label={playing ? "Stop playback" : "Play Gill’s reply"}
-              title={
-                voiceAvailable
-                  ? "Retro voice playback"
-                  : "Voice isn't set up on the server"
-              }
-            >
-              {playing ? <Square /> : <Play />}
             </Button>
           </div>
           <PromptInputSubmit
