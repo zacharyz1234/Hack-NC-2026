@@ -173,6 +173,8 @@ function Index() {
           <GillCompanion returnTo="/">
             <div className="gill-tip-wrap">
               <span className="gill-tip-solid" aria-hidden />
+              <span className="gill-tip-trail gill-tip-trail-near" aria-hidden />
+              <span className="gill-tip-trail gill-tip-trail-far" aria-hidden />
               <aside
                 className="gill-tip-bubble"
                 aria-label="Gill’s tip of the day"
