@@ -268,7 +268,8 @@ describe("finance editing and reduced motion", () => {
     expect(router.state.location.pathname).toBe("/accounts");
     expect(document.querySelector(".bubble-transition")).toBeNull();
   });
-  it("opens Bowl Street immediately without bubbles", async () => {
+  it("opens Bowl Street immediately without bubbles when motion is reduced", async () => {
+    motionSettings.reduced = true;
     mount("/");
     fireEvent.click(await screen.findByRole("button", { name: "Enter Bowl Street stock market" }));
     expect(document.querySelector(".bubble-transition")).toBeNull();

@@ -1,7 +1,7 @@
 import { useFinance } from "@/lib/finance-context";
 import { focusPageHeading } from "@/lib/page-focus";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import {
   Wallet,
   PieChart,
@@ -17,6 +17,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { XPWindow } from "@/components/xp-window";
+import { BowlStreetDive } from "@/components/bowl-street-dive";
+import { TIMELINES, useBowlStreetDive } from "@/lib/bowl-street-dive";
 import { StockMarket } from "@/components/stock-market";
 import { GillCompanion } from "@/components/gill-companion";
 import { useGillNavigation } from "@/lib/gill-navigation-context";
@@ -34,6 +36,7 @@ export const Route = createFileRoute("/")({
 });
 function Index() {
   const [stockView, setStockView] = useState(false);
+  const dive = useBowlStreetDive();
   const router = useRouter();
   useEffect(
     () => router.subscribe("onBeforeNavigate", () => setStockView(false)),
@@ -46,14 +49,30 @@ function Index() {
   const spent = spending(transactions.filter((t) => t.date.startsWith(month)));
   return (
     <>
+      <BowlStreetDive state={dive.state} onSkip={dive.skip} />
       {stockView ? (
-        <StockMarket
-          onReturn={() => setStockView(false)}
-          onAsk={(q) => openGill("/", q)}
-          onEducation={() => setEducation(true)}
-        />
+        <div
+          className="stock-entrance"
+          data-entering={dive.state.stockEntering}
+        >
+          <StockMarket
+            onReturn={() => dive.leave(() => setStockView(false))}
+            onAsk={(q) => openGill("/", q)}
+            onEducation={() => setEducation(true)}
+          />
+        </div>
       ) : (
-        <div className="desktop-grid home-grid">
+        <div
+          className="desktop-grid home-grid"
+          data-dive={dive.state.home ?? undefined}
+          style={
+            dive.state.variant && dive.state.variant !== "return"
+              ? ({
+                  "--minimize": `${TIMELINES[dive.state.variant].vars["minimize"]}ms`,
+                } as CSSProperties)
+              : undefined
+          }
+        >
           <div className="center-dashboard">
             <XPWindow
               title="My Money — Bowl Street Journal"
@@ -145,7 +164,7 @@ function Index() {
             <Button
               variant="ghost"
               className="city-destination"
-              onClick={() => setStockView(true)}
+              onClick={() => dive.enter(() => setStockView(true))}
               aria-label="Enter Bowl Street stock market"
             >
               <div className="city-overlay">
