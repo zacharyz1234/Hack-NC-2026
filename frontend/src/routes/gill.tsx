@@ -1,11 +1,18 @@
 import { focusPageHeading } from "@/lib/page-focus";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { safeReturn } from "@/lib/gill-navigation-context";
-import { XPWindow } from "@/components/xp-window";
-import { Button } from "@/components/ui/button";
+import { GillChat } from "@/components/gill-chat";
+import { useFinance } from "@/lib/finance-context";
+import { useState } from "react";
+import { AuthPanel } from "@/components/auth-panel";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
-// Integration slot: replace only GillDestination with the teammate's conversation view.
-// Search carries navigation context, never financial records. Opening this route makes no assistant request.
+// Search carries navigation context, never financial records.
 export const Route = createFileRoute("/gill")({
   validateSearch: (search: Record<string, unknown>) => ({
     returnTo: safeReturn(search["returnTo"]),
@@ -18,18 +25,39 @@ export const Route = createFileRoute("/gill")({
   component: GillDestination,
 });
 function GillDestination() {
-  const { returnTo } = Route.useSearch();
+  const { returnTo, initialQuestion } = Route.useSearch();
+  const navigate = useNavigate();
+  const { user, muted, setMuted, reload } = useFinance();
+  const [signIn, setSignIn] = useState(false);
   return (
     <div className="gill-destination">
-      <XPWindow title="Gill Gates">
-        <h1 tabIndex={-1} ref={focusPageHeading} data-page-heading>
-          Gill’s conversation room
-        </h1>
-        <p>This space is getting ready for Gill.</p>
-        <Button variant="aero" asChild>
-          <Link to={returnTo}>Return to your money</Link>
-        </Button>
-      </XPWindow>
+      <h1
+        className="sr-only"
+        tabIndex={-1}
+        ref={focusPageHeading}
+        data-page-heading
+      >
+        Gill’s conversation room
+      </h1>
+      <GillChat
+        key={user?.id ?? "guest"}
+        userId={user?.id ?? null}
+        initialQuestion={initialQuestion}
+        muted={muted}
+        onMute={() => setMuted(!muted)}
+        onClose={() => void navigate({ to: returnTo })}
+        onSignIn={() => setSignIn(true)}
+        onDataChanged={() => void reload()}
+      />
+      <Dialog open={signIn} onOpenChange={setSignIn}>
+        <DialogContent>
+          <DialogTitle>Sign in to Bowl Street Journal</DialogTitle>
+          <DialogDescription>
+            Connect your account to let Gill help with your money.
+          </DialogDescription>
+          <AuthPanel onSuccess={() => setSignIn(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

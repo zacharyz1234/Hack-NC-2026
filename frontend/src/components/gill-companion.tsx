@@ -55,26 +55,28 @@ export function GillCompanion({
       </Button>
       <h2 className="side-label">Meet Gill Gates</h2>
       <div className="gill-plaque">Senior Bowl Street Broker</div>
-      <div className="gill-actions">
-        <Button
-          variant="green"
-          className="gill-chat-button"
-          disabled={transitioning}
-          onClick={() => openGill(returnTo)}
-        >
-          <span>Chat with Gill</span>
-        </Button>
-        <Button
-          variant="ghost"
-          className="gill-sound-button"
-          size="icon"
-          aria-label={muted ? "Enable Gill’s voice" : "Mute Gill’s voice"}
-          aria-pressed={!muted}
-          onClick={() => setMuted(!muted)}
-        >
-          <GillSpeaker muted={muted} />
-        </Button>
-      </div>
+      {returnTo !== "/" && (
+        <div className="gill-actions">
+          <Button
+            variant="green"
+            className="gill-chat-button"
+            disabled={transitioning}
+            onClick={() => openGill(returnTo)}
+          >
+            <span>Chat with Gill</span>
+          </Button>
+          <Button
+            variant="ghost"
+            className="gill-sound-button"
+            size="icon"
+            aria-label={muted ? "Enable Gill’s voice" : "Mute Gill’s voice"}
+            aria-pressed={!muted}
+            onClick={() => setMuted(!muted)}
+          >
+            <GillSpeaker muted={muted} />
+          </Button>
+        </div>
+      )}
     </aside>
   );
 }

@@ -153,23 +153,24 @@ function Index() {
               </div>
             </Button>
           </aside>
+          <XPWindow
+            title="A peek at the market"
+            icon={<TrendingUp size={12} />}
+            className="market-preview market-mini home-market-preview"
+          >
+            {[
+              ["S&P 500", "+0.63%"],
+              ["NASDAQ", "+0.91%"],
+              ["Dow", "+0.47%"],
+            ].map(([name, change]) => (
+              <div className="market-mini-row" key={name}>
+                <strong>{name}</strong>
+                <span className="positive">↗ {change}</span>
+              </div>
+            ))}
+          </XPWindow>
+
           <GillCompanion returnTo="/">
-            <XPWindow
-              title="A peek at the market"
-              icon={<TrendingUp size={12} />}
-              className="market-preview market-mini"
-            >
-              {[
-                ["S&P 500", "+0.63%"],
-                ["NASDAQ", "+0.91%"],
-                ["Dow", "+0.47%"],
-              ].map(([name, change]) => (
-                <div className="market-mini-row" key={name}>
-                  <strong>{name}</strong>
-                  <span className="positive">↗ {change}</span>
-                </div>
-              ))}
-            </XPWindow>
             <div className="gill-tip-wrap">
               <span className="gill-tip-solid" aria-hidden />
               <aside

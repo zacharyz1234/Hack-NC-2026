@@ -1,7 +1,6 @@
 // Gill's chat window, backed by our FastAPI assistant (backend /assistant/...).
 // The backend decides what Gill may read (consent cards) and sends structured events we render here.
 import { useEffect, useRef, useState } from "react";
-import { XPWindow } from "./xp-window";
 import { ConsentCard, GillCard } from "./gill-cards";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,11 +16,10 @@ import {
 import {
   PromptInput,
   PromptInputTextarea,
-  PromptInputFooter,
   PromptInputSubmit,
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
-import { Fish, Mic, Volume2, VolumeX, Square } from "lucide-react";
+import { Mic, Volume2, VolumeX, Square, Send } from "lucide-react";
 import { api, apiAudio, ApiError } from "@/lib/api";
 import type {
   ConsentChoice,
@@ -30,7 +28,9 @@ import type {
   SessionCreated,
   Turn,
 } from "@/lib/gill-protocol";
-import bowl from "@/assets/gill-bowl.png";
+import chatRoom from "@/assets/gill-chat-room.png";
+import mouthClosed from "@/assets/gill-mouth-closed.png";
+import mouthOpen from "@/assets/gill-mouth-open.png";
 
 type Item =
   | { key: string; event: GillEvent; done: boolean }
@@ -64,6 +64,9 @@ export function GillChat({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [listening, setListening] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const [maximized, setMaximized] = useState(false);
+  const [mouthMoving, setMouthMoving] = useState(false);
   const audio = useRef<AudioContext | null>(null);
   const source = useRef<AudioBufferSourceNode | null>(null);
   const speechRequest = useRef(0);
@@ -71,6 +74,7 @@ export function GillChat({
   speakerMuted.current = muted;
   const textarea = useRef<HTMLTextAreaElement | null>(null);
   const recognition = useRef<{ stop: () => void } | null>(null);
+  const mounted = useRef(false);
 
   async function start(notice?: string) {
     setError("");
@@ -103,9 +107,10 @@ export function GillChat({
   }
 
   useEffect(() => {
+    mounted.current = true;
     start();
-    textarea.current?.focus();
     return () => {
+      mounted.current = false;
       speechRequest.current++;
       recognition.current?.stop();
       source.current?.stop();
@@ -122,8 +127,21 @@ export function GillChat({
       speechRequest.current++;
       source.current?.stop();
       source.current = null;
+      setSpeaking(false);
     }
   }, [muted]);
+
+  useEffect(() => {
+    if (!speaking) {
+      setMouthMoving(false);
+      return;
+    }
+    const timer = window.setInterval(
+      () => setMouthMoving((open) => !open),
+      160,
+    );
+    return () => window.clearInterval(timer);
+  }, [speaking]);
 
   // Every call returns a turn: append its events. A 404 means the chat expired.
   async function run(
@@ -144,6 +162,7 @@ export function GillChat({
     speechRequest.current++;
     source.current?.stop();
     source.current = null;
+    setSpeaking(false);
     setBusy(true);
     setError("");
     if (before) setItems(before);
@@ -153,8 +172,15 @@ export function GillChat({
         "POST",
         body,
       );
-      const reply = [...turn.events].reverse().find((event) => event.type === "message");
-      if (reply?.type === "message" && voiceAvailable && !speakerMuted.current)
+      const reply = [...turn.events]
+        .reverse()
+        .find((event) => event.type === "message");
+      if (
+        mounted.current &&
+        reply?.type === "message" &&
+        voiceAvailable &&
+        !speakerMuted.current
+      )
         void speak(sessionId, reply.message_id);
       setItems((now) => [
         // a card counts as answered only once the backend accepted the answer
@@ -247,6 +273,7 @@ export function GillChat({
       node.onended = () => {
         if (source.current === node) {
           source.current = null;
+          if (mounted.current) setSpeaking(false);
         }
         node.disconnect();
         highpass.disconnect();
@@ -255,6 +282,7 @@ export function GillChat({
         gain.disconnect();
       };
       node.start();
+      setSpeaking(true);
     } catch (e) {
       if (requestId === speechRequest.current && !speakerMuted.current)
         setError(e instanceof Error ? e.message : "Voice playback failed.");
@@ -308,142 +336,175 @@ export function GillChat({
   }
 
   return (
-    <XPWindow
-      title="Gill Gates — Your financial advisor"
-      icon={<Fish size={15} />}
-      onClose={onClose}
-      className="chat-window"
+    <section
+      className={`gill-chatroom ${maximized ? "gill-chatroom-maximized" : ""}`}
+      aria-label="Gill’s conversation room"
     >
-      <div className="chat-intro">
-        <img src={bowl} alt="Gill Gates" />
-        <div>
-          <strong>Gill Gates</strong>
-          <p className="text-muted-foreground">
-            {userId ? (
-              "Bowl Street’s finest. No contest."
-            ) : (
-              <>
-                Chatting as a guest.{" "}
-                <Button
-                  variant="link"
-                  size="xs"
-                  className="tiny-link"
-                  onClick={onSignIn}
-                >
-                  Sign in
-                </Button>{" "}
-                to let Gill (with your OK) look at your money.
-              </>
-            )}
-          </p>
-        </div>
+      <img className="gill-chatroom-art" src={chatRoom} alt="" />
+      <div className="gill-room-title">
+        <strong>Gill Gates</strong>
+        <span>Senior Bowl Street Broker</span>
       </div>
-      <Conversation className="chat-transcript">
-        <ConversationContent className="p-1 gap-3">
-          {items.map((item) =>
-            "user" in item ? (
-              <Message key={item.key} from="user">
-                <MessageContent>{item.user}</MessageContent>
-              </Message>
-            ) : (
-              <EventView
-                key={item.key}
-                event={item.event}
-                active={!item.done && !busy}
-                onSubmit={(value) =>
-                  item.event.type === "component" &&
-                  run(
-                    "/submit",
-                    { call_id: item.event.call_id, value },
-                    { answered: item.key },
-                  )
-                }
-                onDismiss={() =>
-                  item.event.type === "component" &&
-                  run(
-                    "/submit",
-                    { call_id: item.event.call_id, dismissed: true },
-                    { answered: item.key },
-                  )
-                }
-                onConsent={(decisions) =>
-                  item.event.type === "consent_request" &&
-                  run(
-                    "/consent",
-                    { request_id: item.event.request_id, decisions },
-                    { answered: item.key },
-                  )
-                }
-                onSaved={saved}
-              />
-            ),
-          )}
-          {busy && <Shimmer>Gill is considering your position…</Shimmer>}
-          {suggestions.length > 0 && !busy && (
-            <div className="gill-suggestions">
-              {suggestions.map((s) => (
-                <Button
-                  key={s}
-                  variant="soft"
-                  size="xs"
-                  onClick={() => send(s)}
-                >
-                  {s}
-                </Button>
-              ))}
-            </div>
-          )}
-        </ConversationContent>
-        <ConversationScrollButton />
-      </Conversation>
-      {error && (
-        <p className="chat-error" role="status">
-          {error}
-        </p>
-      )}
-      <PromptInput onSubmit={({ text }) => send(text)}>
-        <PromptInputTextarea
-          ref={textarea}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask Gill a financial question…"
-          aria-label="Question for Gill"
-        />
-        <PromptInputFooter>
-          <div className="chat-controls">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              type="button"
-              onClick={microphone}
-              aria-label={listening ? "Stop microphone" : "Use microphone"}
-              title="Speak your question"
-            >
-              {listening ? <Square /> : <Mic />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              type="button"
-              onClick={onMute}
-              aria-label={muted ? "Enable voice" : "Mute voice"}
-              title="Text-only mode"
-            >
-              {muted ? <VolumeX /> : <Volume2 />}
-            </Button>
+      <button
+        className="gill-room-window-control gill-room-minimize"
+        onClick={onClose}
+        aria-label="Return to your money"
+      />
+      <button
+        className="gill-room-window-control gill-room-maximize"
+        onClick={() => setMaximized(!maximized)}
+        aria-label={maximized ? "Restore chatroom size" : "Expand chatroom"}
+      />
+      <button
+        className="gill-room-window-control gill-room-close"
+        onClick={onClose}
+        aria-label="Close Gill’s chatroom"
+      />
+      <div
+        className="gill-room-aquarium"
+        aria-label={speaking ? "Gill is speaking" : "Gill is swimming"}
+      >
+        <div className="gill-room-swimmer">
+          <div className="gill-room-fish">
+            <img
+              src={mouthClosed}
+              alt="Gill Gates, a goldfish wearing a tie"
+              className={mouthMoving ? "gill-mouth-hidden" : ""}
+            />
+            <img
+              src={mouthOpen}
+              alt=""
+              aria-hidden="true"
+              className={mouthMoving ? "" : "gill-mouth-hidden"}
+            />
           </div>
-          <PromptInputSubmit
-            variant="aero"
-            status={busy ? "submitted" : "ready"}
-            disabled={busy || !input.trim()}
+        </div>
+        <span className="gill-room-caption">
+          {speaking
+            ? "Gill has the floor…"
+            : busy
+              ? "Considering your position…"
+              : "Your distinguished financial companion"}
+        </span>
+      </div>
+      <button
+        className="gill-room-microphone"
+        onClick={microphone}
+        aria-label={listening ? "Stop microphone" : "Use microphone"}
+        title="Dictate your question"
+      >
+        {listening ? <Square /> : <Mic />}
+      </button>
+      <button
+        className="gill-room-speaker"
+        onClick={onMute}
+        aria-label={muted ? "Enable Gill’s voice" : "Mute Gill’s voice"}
+        aria-pressed={!muted}
+        title={
+          voiceAvailable
+            ? "Toggle Gill’s voice"
+            : "Voice is unavailable on the server"
+        }
+      >
+        {muted ? <VolumeX /> : <Volume2 />}
+      </button>
+      <div className="gill-room-chat">
+        <div className="gill-room-chat-heading">
+          <strong>Conversation</strong>
+          {!userId && (
+            <Button variant="link" size="xs" onClick={onSignIn}>
+              Sign in
+            </Button>
+          )}
+        </div>
+        <Conversation className="chat-transcript">
+          <ConversationContent className="p-1 gap-3">
+            {items.map((item) =>
+              "user" in item ? (
+                <Message key={item.key} from="user">
+                  <MessageContent>{item.user}</MessageContent>
+                </Message>
+              ) : (
+                <EventView
+                  key={item.key}
+                  event={item.event}
+                  active={!item.done && !busy}
+                  onSubmit={(value) =>
+                    item.event.type === "component" &&
+                    run(
+                      "/submit",
+                      { call_id: item.event.call_id, value },
+                      { answered: item.key },
+                    )
+                  }
+                  onDismiss={() =>
+                    item.event.type === "component" &&
+                    run(
+                      "/submit",
+                      { call_id: item.event.call_id, dismissed: true },
+                      { answered: item.key },
+                    )
+                  }
+                  onConsent={(decisions) =>
+                    item.event.type === "consent_request" &&
+                    run(
+                      "/consent",
+                      { request_id: item.event.request_id, decisions },
+                      { answered: item.key },
+                    )
+                  }
+                  onSaved={saved}
+                />
+              ),
+            )}
+            {busy && <Shimmer>Gill is considering your position…</Shimmer>}
+            {suggestions.length > 0 && !busy && (
+              <div className="gill-suggestions">
+                {suggestions.map((s) => (
+                  <Button
+                    key={s}
+                    variant="soft"
+                    size="xs"
+                    onClick={() => send(s)}
+                  >
+                    {s}
+                  </Button>
+                ))}
+              </div>
+            )}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
+        {error && (
+          <p className="chat-error" role="status">
+            {error}
+          </p>
+        )}
+        <PromptInput
+          className="gill-room-input"
+          onSubmit={({ text }) => send(text)}
+        >
+          <PromptInputTextarea
+            ref={textarea}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask Gill a financial question…"
+            aria-label="Question for Gill"
           />
-        </PromptInputFooter>
-      </PromptInput>
-      <small className="text-muted-foreground text-[9px] mt-2">
-        Educational guidance only. Gill can read your data only with your OK,
-        and can’t change anything.
-      </small>
-    </XPWindow>
+          <PromptInputSubmit
+            className="gill-room-send"
+            status={busy ? "submitted" : "ready"}
+            disabled={busy || !sessionId || !input.trim()}
+            aria-label="Send message to Gill"
+          >
+            <Send />
+          </PromptInputSubmit>
+        </PromptInput>
+        <small className="text-muted-foreground text-[9px] mt-2">
+          Educational guidance. Records accessed only with your OK.
+        </small>
+      </div>
+    </section>
   );
 }
 

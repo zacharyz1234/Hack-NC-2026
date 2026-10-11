@@ -246,10 +246,15 @@ describe("finance pages", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(5000);
     });
-    expect(
-      screen.getByRole("link", { name: "Return to your money" }),
-    ).toHaveAttribute("href", "/accounts");
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/assistant/sessions"),
+      expect.objectContaining({ method: "POST" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Return to your money" }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(100);
+    });
+    expect(router.state.location.pathname).toBe("/accounts");
   });
 });
 describe("finance editing and reduced motion", () => {
@@ -295,7 +300,7 @@ describe("finance editing and reduced motion", () => {
     expect(await screen.findByText("Budget saved.")).toBeInTheDocument();
     expect(screen.getByText(/\$1.50 over budget/)).toBeInTheDocument();
     await act(() => router.navigate({ to: "/accounts" }));
-    expect(await screen.findByLabelText("Goal name")).toHaveValue("New laptop");
+    await waitFor(() => expect(screen.getByLabelText("Goal name")).toHaveValue("New laptop"));
     await act(() => router.navigate({ to: "/spending" }));
     expect(
       await screen.findByRole("spinbutton", { name: "Food & Drink budget" }),

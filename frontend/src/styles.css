@@ -185,3 +185,64 @@
 @media(max-width:600px){.brand-name{font-size:21px;max-width:150px;line-height:1.1}.brand{gap:7px}.header-right{gap:5px}.header-right button{padding:0 7px}.header-right button svg{display:none}.home-grid{grid-template-columns:1fr;grid-template-areas:"money" "city" "gill";grid-template-rows:auto 130px auto;gap:20px;min-height:0}.home-grid .city-destination{min-height:110px}.home-accounts .account-card{min-height:125px}.home-accounts .combined-account{min-height:155px}.combined-balances{margin:14px 0}.combined-balances strong{font-size:30px}.home-grid .gill-side{grid-template-columns:minmax(105px,1fr) minmax(125px,1fr) 85px}.home-grid .gill-tip-wrap{width:110px;transform:translate(0,-8px)}.home-grid .gill-quip{font-size:9px}.home-grid .gill-tip-bubble{font-size:8px}.finance-nav{gap:4px}.finance-nav a{font-size:11px;padding:9px 10px;flex:1 1 40%;justify-content:center}.finance-page-heading h1{font-size:31px}.finance-layout .finance-gill{grid-template-columns:minmax(0,1fr) 125px minmax(75px,100px);gap:3px}.finance-layout .finance-gill .bowl-control{width:125px;height:130px}.finance-layout .finance-gill .bowl-glass{width:145px;height:145px}.finance-layout .finance-gill .gill-chat-button{min-width:0;width:100%;font-size:11px}.finance-layout .finance-gill .gill-quip{font-size:9px;padding:7px}.finance-layout .finance-gill .side-label{font-size:14px}.account-pages-grid,.analysis-charts,.budget-grid{grid-template-columns:1fr}.finance-bank-strip{flex-direction:column;align-items:flex-start;gap:10px}.finance-account .window-body{padding:18px}.finance-balance{font-size:40px}.finance-stats{gap:6px}.finance-stats>div{padding:13px 9px;gap:8px}.finance-stats strong{font-size:22px}.finance-stats small{font-size:9px}.activity-filters{grid-template-columns:1fr 1fr;padding:12px;gap:12px}.merchant-search{grid-column:1/-1}.finance-content{gap:16px}.finance-dialog .form-grid{grid-template-columns:1fr}.finance-account .transaction-table{min-width:285px}.finance-dialog{width:calc(100% - 24px)}.finance-stats span{font-size:10px}}
 
 .finance-account{min-width:0}
+
+/* Gill's illustrated chatroom: positions follow the supplied 1320 x 990 frame. */
+.gill-destination{width:100%;display:flex;justify-content:center;padding:12px 0 26px}
+.gill-chatroom{position:relative;width:min(1100px,100%);aspect-ratio:4/3;color:#103b52;isolation:isolate}
+.gill-chatroom-art{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:-1}
+.gill-room-title{position:absolute;left:4%;top:2.6%;display:flex;align-items:baseline;gap:14px;text-shadow:0 1px 0 #fff;font-size:clamp(12px,1.6vw,22px)}
+.gill-room-title span{font-size:11px;letter-spacing:.06em}
+.gill-room-window-control{position:absolute;top:1.8%;height:5.1%;border-radius:9px;background:transparent;border:0;cursor:pointer}
+.gill-room-minimize{left:80.6%;width:5%}.gill-room-maximize{left:86%;width:5%}.gill-room-close{left:91.8%;width:6.4%}
+.gill-chatroom button:focus-visible{outline:3px solid #093f82;outline-offset:3px}
+.gill-room-aquarium{position:absolute;left:30.7%;top:11%;width:66.7%;height:80%;overflow:hidden;border-radius:25px;pointer-events:none}
+.gill-room-swimmer{position:absolute;left:18%;top:18%;width:64%;aspect-ratio:1;animation:gill-swim 12s ease-in-out infinite}
+.gill-room-fish{position:relative;width:100%;height:100%;animation:gill-fin 2s ease-in-out infinite}
+.gill-room-fish img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:none}
+.gill-room-fish .gill-mouth-hidden{visibility:hidden}
+.gill-room-caption{position:absolute;bottom:4%;left:5%;font-size:12px;background:#d5f7ffcf;padding:8px 14px;border-radius:999px;max-width:65%;text-align:center}
+.gill-room-speaker,.gill-room-microphone{position:absolute;top:81.5%;width:6.8%;aspect-ratio:1;border-radius:50%;display:flex;justify-content:center;align-items:center;cursor:pointer;color:white;border:3px solid #a5e9ff;background:linear-gradient(#89e7ff,#00a4e9 48%,#0072ce);box-shadow:inset 0 2px 5px #fff9,0 2px 3px #126daa;z-index:2}
+.gill-room-speaker{left:90.2%}.gill-room-microphone{left:81.9%;width:7.6%;top:81%}
+.gill-room-speaker svg,.gill-room-microphone svg{width:45%;height:45%}
+.gill-room-chat{position:absolute;left:2.9%;top:10.7%;width:24.3%;height:81.6%;display:flex;flex-direction:column;min-height:0;gap:6px}
+.gill-room-chat-heading{display:flex;align-items:center;justify-content:space-between;font-size:12px;padding:4px 4px 0}
+.gill-room-chat .chat-transcript{flex:1;min-height:0;padding:6px 3px;margin-bottom:4%;font-size:12px}
+.gill-room-chat .chat-transcript [data-slot="message-content"]{font-size:12px;overflow-wrap:anywhere}
+.gill-room-chat .chat-transcript p{font-size:12px;line-height:1.55}
+.gill-room-chat .chat-transcript button{white-space:normal;height:auto;min-height:28px}
+.gill-room-chat .gill-suggestions{display:flex;flex-wrap:wrap;gap:5px}
+.gill-room-chat .gill-suggestions button{font-size:10px;text-align:left}
+.gill-room-chat .chat-error{font-size:11px;background:#ffededee;border-radius:8px;padding:7px;max-height:75px;overflow:auto}
+.gill-room-chat .gill-room-input{flex-shrink:0;height:8%;min-height:46px;position:relative;margin:0;background:transparent}
+.gill-room-input [data-slot="input-group"]{height:100%;border:0;background:transparent;box-shadow:none;display:block;padding-right:48px}
+.gill-room-input textarea{height:100%;min-height:0!important;resize:none;padding:10px 6px;font-size:12px;background:transparent;box-shadow:none}
+.gill-room-send{position:absolute;right:0;top:0;width:42px;height:42px;border-radius:50%;background:linear-gradient(#73dcff,#0089dc);color:white;border:2px solid #b7f3ff;padding:9px}
+.gill-room-chat>small{position:absolute;top:102%;width:100%;font-size:9px!important;color:#16425d}
+.gill-chatroom-maximized{position:fixed;inset:0;margin:auto;width:min(100vw,133.33vh);z-index:60;filter:drop-shadow(0 0 30px #003559aa)}
+@media(prefers-reduced-motion:reduce){.gill-room-swimmer,.gill-room-fish{animation:none}}
+@media(max-width:700px){
+.gill-destination{padding-top:0}.gill-chatroom{aspect-ratio:auto;min-height:780px;background:linear-gradient(#b9f3ff,#e8fbff);border:2px solid #53cbf8;border-radius:25px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.gill-chatroom-art{height:300px;object-fit:fill;border-radius:24px}.gill-room-title{top:10px;left:20px;font-size:15px}.gill-room-title span{display:none}
+.gill-room-window-control{top:6px;height:18px}.gill-room-aquarium{left:30.7%;top:35px;width:66%;height:235px}.gill-room-caption{font-size:9px;padding:5px;bottom:25%;max-width:90%}
+.gill-room-swimmer{top:10%;left:5%;width:90%}.gill-room-speaker{top:245px;left:auto;right:16px;width:38px}.gill-room-microphone{top:245px;left:auto;right:60px;width:42px}
+.gill-room-chat{position:relative;left:auto;top:auto;width:100%;height:440px;margin-top:290px;padding:10px;background:#f6fdffed;border:1px solid #7bdbff;border-radius:15px}
+.gill-room-chat .chat-transcript{margin-bottom:0}.gill-room-chat .gill-room-input{height:48px;background:white;border:1px solid #76ccef;border-radius:24px}.gill-room-chat>small{top:103%}
+.gill-chatroom-maximized{position:relative;inset:auto;width:100%;z-index:auto}
+}
+.gill-destination{max-width:none;margin:0 auto}
+@media(min-width:701px){.gill-chatroom:not(.gill-chatroom-maximized){width:min(1100px,100%,calc((100dvh - 165px) * 4 / 3))}.gill-room-title{font-size:clamp(12px,1.4vw,20px)}.gill-room-title span{font-size:10px}.gill-room-chat .chat-transcript [data-slot="message-content"]{padding:5px}.gill-room-chat .chat-transcript p{font-size:11px}.gill-room-chat .gill-room-send{width:36px;height:36px}.gill-room-input [data-slot="input-group"]{padding-right:38px}}
+
+/* Homepage market preview below the header; rotating quips directly above Gill. */
+.home-grid>.home-market-preview{grid-area:city;justify-self:end;align-self:start;width:180px;max-width:180px;margin:0;z-index:3}
+.home-grid .gill-side{position:relative}
+.home-grid .gill-quip{position:absolute;grid-column:2 / 3;grid-row:2 / 3;bottom:100%;left:0;right:0;align-self:auto;justify-self:auto;margin:0 auto 12px;width:220px;max-width:100%}
+.home-grid .gill-quip::after{left:calc(50% - 6px);right:auto}
+@media(max-width:600px){.home-grid>.home-market-preview{width:155px;max-width:155px}.home-grid .gill-quip{font-size:10px;width:180px;margin-bottom:6px}}
+
+/* Reserve the bowl artwork's full height before Gill's name and title. */
+.home-grid .gill-side .bowl-control{height:250px}
+.home-grid .gill-side>.side-label{position:relative;margin-top:8px;line-height:1.2}
+.home-grid .gill-side>.gill-plaque{position:relative;margin:2px 0 10px;font-size:12px;line-height:1.5;white-space:normal}
+@media(max-width:1100px){.home-grid .gill-side .bowl-control{height:190px}}
+@media(max-width:600px){.home-grid .gill-side .bowl-control{height:185px}.home-grid .gill-side>.gill-plaque{font-size:10px}}
+@media(min-width:1101px){.home-grid{grid-template-rows:minmax(200px,33vh) auto}}
