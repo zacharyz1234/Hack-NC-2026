@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Globe, Home, Settings, ShieldCheck, Wallet, Wifi } from "lucide-react";
+import { Home, Settings, ShieldCheck, Wallet, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -64,9 +64,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="wallpaper-wash" />
       <header className="desktop-header">
         <Link to="/" className="brand" aria-label="Bowl Street Journal home">
-          <div className="brand-mark">
-            <Globe size={29} />
-          </div>
+          <img className="brand-logo" src="/bowl-street-logo.png" alt="" width={70} height={55} />
           <div className="brand-name">Bowl Street Journal</div>
         </Link>
         <div className="header-right">
