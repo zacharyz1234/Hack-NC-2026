@@ -553,3 +553,30 @@ Answer: `POST /assistant/sessions/as_4fQ2…/consent` with `{ "request_id": "cr_
 - [ ] Voice: speaker button per message, autoplay only when the toggle is on, stop/mute control.
 - [ ] Error states for 401/404/409/422/503 as in section 4.
 - [ ] Accessibility: keyboard, Esc to close, `aria-live`, labelled inputs, focus management, readable contrast on glass.
+
+## Finance page navigation and the Gill view
+
+The finance UI now lives at `/accounts`, `/spending`, and `/purchases`. Shared data,
+mutation handlers, mute state, and chatter preferences are exposed by `useFinance()`
+from `frontend/src/lib/finance-context.ts`; the provider stays mounted
+above the routes. Demo edits persist during navigation and reset on refresh.
+
+The conversation-view integration slot is `frontend/src/routes/gill.tsx`.
+Replace `GillDestination` with the conversation view when ready. Read validated
+`returnTo` and `initialQuestion` from `Route.useSearch()`. Use `useFinance()` for
+`user`, `muted`, `setMuted`, and `reload` when wiring the existing chat contract.
+The shared shell already supplies wallpaper, account settings, and the taskbar.
+This placeholder does not mount `GillChat` or start an assistant session.
+
+Call `useGillNavigation().openGill(returnTo, initialQuestion?)` from
+`frontend/src/lib/gill-navigation-context.ts` to navigate through
+the bubble transition. Allowed return destinations are `/`, `/accounts`,
+`/spending`, and `/purchases`; other values fall back to `/`. Navigation context
+never contains financial records. Consent and assistant data access rules above
+still apply when the conversation view is connected.
+
+`GET /transactions` also accepts optional `offset` (default 0, non-negative).
+The response shape and default 200-row limit are unchanged. The finance provider
+reads successive pages until a short page is returned, and displays totals only
+after all pages load successfully. Signed-in balances remain bank snapshots;
+manual transaction edits update the ledger, not the bank account balance.

@@ -73,3 +73,30 @@ def test_update_savings_goal(client):
 
     assert updated.json() == {**goal, "saved_cents": 12500, "name": "Spring trip"}
     assert client.patch(f"/savings-goals/{goal['id']}", json={"saved_cents": 1}, headers=signup(client, "x@unc.edu")).status_code == 404
+
+
+def test_transaction_pagination_beyond_200(client):
+    from app.db import get_conn
+
+    headers = signup(client)
+    uid = user_id(client, headers)
+    seed_finances(uid)
+    account_id = client.get("/accounts", headers=headers).json()["accounts"][0]["id"]
+    with get_conn() as conn:
+        conn.executemany(
+            "INSERT INTO expenses (user_id, amount_cents, description, spent_on, source, account_id)"
+            " VALUES (?, 100, ?, '2026-10-10', 'manual', ?)",
+            [(uid, f"Purchase {i}", account_id) for i in range(205)],
+        )
+    all_rows = client.get("/transactions?limit=1000", headers=headers).json()["transactions"]
+    first = client.get("/transactions", headers=headers).json()["transactions"]
+    rest = client.get("/transactions?offset=200", headers=headers).json()["transactions"]
+    assert len(first) == 200
+    assert first + rest == all_rows
+    assert len({row["id"] for row in all_rows}) == len(all_rows)
+    assert client.get("/transactions?offset=1000", headers=headers).json() == {"transactions": []}
+    assert client.get("/transactions?offset=-1", headers=headers).status_code == 422
+    filtered = client.get(f"/transactions?account_id={account_id}&offset=200", headers=headers).json()["transactions"]
+    assert filtered and all(row["account_id"] == account_id for row in filtered)
+    other = signup(client, "other-paging@unc.edu")
+    assert client.get("/transactions?offset=200", headers=other).json() == {"transactions": []}

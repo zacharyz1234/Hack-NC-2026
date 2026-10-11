@@ -81,6 +81,7 @@ def _parse(tx_id: str) -> tuple[str, int]:
 def list_transactions(
     account_id: int | None = None,
     limit: int = Query(200, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
     user: dict = Depends(require_user),
 ):
     where, params = "WHERE user_id = ?", [user["id"]]
@@ -88,7 +89,7 @@ def list_transactions(
         where += " AND account_id = ?"
         params.append(account_id)
     with get_conn() as conn:
-        rows = conn.execute(_SELECT + where + " ORDER BY date DESC, id DESC LIMIT ?", [*params, limit]).fetchall()
+        rows = conn.execute(_SELECT + where + " ORDER BY date DESC, id DESC LIMIT ? OFFSET ?", [*params, limit, offset]).fetchall()
     return {"transactions": [_public(row) for row in rows]}
 
 
