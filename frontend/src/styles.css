@@ -499,3 +499,11 @@ html[data-dive="surfacing"] .wallpaper{transform-origin:var(--dive-origin,62% 40
 
 /* Speech bubbles for the bee and flowers: the My Money window's frosted white-blue glass, fading to ivory at the bottom. */
 :root{--bubble-bg:linear-gradient(to bottom,oklch(1 0 0 / .86),oklch(.96 .035 220 / .84) 50%,oklch(.985 .035 95 / .88));--bubble-tail:oklch(.985 .035 95 / .88)}
+/* One look for every speech bubble (Gill, the bee, the flowers). Change it here and all three follow. */
+:root{--bubble-border:oklch(.77 .079 231 / .8)}
+.gill-quip,.bee-bubble,.flower-bubble{padding:9px 11px;border-radius:14px;border:1px solid var(--bubble-border);background:var(--bubble-bg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--window-shadow);color:var(--foreground);font-size:11px;font-weight:400;line-height:1.4;text-align:center}
+.gill-quip::after,.bee-bubble::after,.flower-bubble::after{width:12px;height:12px;bottom:-7px;background:var(--bubble-tail);border-right:1px solid var(--bubble-border);border-bottom:1px solid var(--bubble-border)}
+.flower-bubble::after{left:calc(50% - 6px)}
+.flower-bubble[data-hurt]::after{border-color:oklch(.75 .12 25)}
+@media(max-width:1100px){.gill-quip,.bee-bubble,.flower-bubble{font-size:10px}}
+@media(max-width:600px){.home-grid .gill-quip{font-size:10px}}
