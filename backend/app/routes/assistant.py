@@ -17,7 +17,7 @@ UNAVAILABLE = "Gill can't reach the AI service right now. Everything else in the
 
 
 class MessageIn(BaseModel):
-    text: str = Field(min_length=1, max_length=2000)
+    text: str = Field(min_length=1, max_length=16000)
 
 
 class ConsentIn(BaseModel):

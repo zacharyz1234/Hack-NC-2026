@@ -26,6 +26,7 @@ from app.assistant.periods import Period, add_months, month_key, month_label, mo
 from app.assistant.scopes import BALANCES, BUDGET_GOALS, HISTORY, SCOPES, SUMMARY
 from app.db import readonly_conn
 from app.services.twelve_data import MarketDataError
+from app.services import peer_budgets
 
 
 @dataclass
@@ -528,6 +529,35 @@ def _run_gill_background(ctx: ToolContext, args: GillBackgroundArgs) -> Outcome:
 # ---------- registry ----------
 
 
+def _peer_period(args, on):
+    start, end = peer_budgets.bounds(args.month, on)
+    return Period("peer_month", start, end, max(0, (on - start).days + 1))
+
+
+def _peer(args, ctx):
+    try:
+        return peer_budgets.peer(args.profile_id, args.month, ctx.today)
+    except ValueError as exc:
+        raise ToolError("unknown_peer", str(exc)) from None
+
+
+def _run_peer(ctx, args):
+    return Outcome(result=_peer(args, ctx))
+
+
+def _run_peer_comparison(ctx, args):
+    other = _peer(args, ctx)
+    own = peer_budgets.student_summary(ctx.user_id, args.month, ctx.today)
+    return Outcome(result=peer_budgets.compare(own, other),
+                   reads=[_read(SUMMARY, args.month), _read(BUDGET_GOALS, args.month)])
+
+
+def _run_demo_peer_comparison(ctx, args):
+    if ctx.signed_in:
+        raise ToolError("not_available", "Signed-in students must use get_peer_budget_comparison with consent.")
+    return Outcome(result=peer_budgets.compare(peer_budgets.demo_summary(args.demo_summary), _peer(args, ctx)))
+
+
 def _stock_result(fetch, args) -> Outcome:
     try:
         return Outcome(result=fetch(args))
@@ -550,6 +580,22 @@ def _run_stock_comparison(ctx: ToolContext, args: stock_facts.StockComparisonArg
 
 
 _SPECS = [
+    ToolSpec("get_peer_budget", "data",
+        "Retrieve a fictional student peer's monthly planned limits and checking activity. Public demo data only; "
+        "no consent required. These are fictional examples, never real students. Use the selected profile ID and YYYY-MM.",
+        peer_budgets.PeerArgs, _run_peer),
+    ToolSpec("get_peer_budget_comparison", "data",
+        "Compare a fictional peer to the signed-in student's saved budget and checking activity for YYYY-MM. "
+        "The app requests both spending-summary and budget/goals permissions before reading. Server computes all "
+        "differences and totals. Explain income/housing context; lower spending does not establish a better budget. "
+        "No writes. Optional changes must go through show_budget_plan and the student's review/Save button.",
+        peer_budgets.PeerArgs, _run_peer_comparison,
+        scopes=lambda args: [SUMMARY, BUDGET_GOALS], period=_peer_period),
+    ToolSpec("get_demo_peer_budget_comparison", "data",
+        "Guests only: compare a fictional peer with the labeled Local demo ledger summary explicitly supplied "
+        "by the Ask Gill button. Never invent or fetch guest figures. Server computes differences. No private "
+        "data or consent needed. Preserve fictional/demo labels; explain context and optional tradeoffs, never save.",
+        peer_budgets.DemoCompareArgs, _run_demo_peer_comparison),
     ToolSpec(
         "get_stock_search", "data",
         "Resolve a company name or ticker to US stocks and ETFs using Twelve Data. Public information, "
@@ -700,7 +746,9 @@ def gemini_schema(model: type[BaseModel]) -> dict | None:
             node = {**options[0], **{k: v for k, v in node.items() if k != "anyOf"}}
         out: dict = {}
         for key, value in node.items():
-            if key == "exclusiveMinimum":
+            if key == "const":
+                out["enum"] = [value]
+            elif key == "exclusiveMinimum":
                 out.setdefault("minimum", value)
             elif key == "properties":
                 out[key] = {name: clean(prop) for name, prop in value.items()}

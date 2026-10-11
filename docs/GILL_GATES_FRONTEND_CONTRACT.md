@@ -199,7 +199,7 @@ export interface SpendingChartProps {
 }
 
 // ===== Request bodies =====
-export interface SendMessageBody { text: string } // 1–2000 chars
+export interface SendMessageBody { text: string } // 1–16000 chars (supports explicit guest demo summaries)
 export interface ConsentBody {
   request_id: string;
   decisions: Partial<Record<Scope, ConsentChoice>>; // one entry per item in the card
@@ -577,7 +577,7 @@ Call `useGillNavigation().openGill(returnTo, initialQuestion?)` from
 `frontend/src/lib/gill-navigation-context.ts` to navigate through
 the bubble transition. Allowed return destinations are `/`, `/accounts`,
 `/spending`, and `/purchases`; other values fall back to `/`. Navigation context
-never contains financial records. Consent and assistant data access rules above
+never contains signed-in financial records. Guest comparison actions may explicitly supply labeled demo figures. Consent and assistant data access rules above
 still apply when the conversation view is connected.
 
 `GET /transactions` also accepts optional `offset` (default 0, non-negative).

@@ -29,7 +29,7 @@ from tests.conftest import (
 )
 
 QUESTION = "Where could I cut spending?"
-NO_STUDENT_DATA = {"get_gill_background", "get_stock_search", "get_stock_quote", "get_stock_price_comparison"}
+NO_STUDENT_DATA = {"get_gill_background", "get_stock_search", "get_stock_quote", "get_stock_price_comparison", "get_peer_budget", "get_demo_peer_budget_comparison"}
 
 
 def _summary_turn(client, fake_gemini, headers, sid, *, period="last_30_days"):
@@ -360,7 +360,8 @@ def test_tools_are_read_only_by_name():
         assert not re.search(r"save|update|delete|create|transfer|remove|write|edit|add_|set_", name)
         assert (spec.kind == "data") == name.startswith("get_")
         if spec.kind == "data" and name not in NO_STUDENT_DATA:
-            assert spec.scopes(spec.args.model_validate({})), f"{name} must need consent"
+            args = {"profile_id": "peer-shared_rental-2000", "month": "2026-10"} if name == "get_peer_budget_comparison" else {}
+            assert spec.scopes(spec.args.model_validate(args)), f"{name} must need consent"
 
 
 def test_readonly_connection_cannot_write(client):

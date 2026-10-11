@@ -142,4 +142,4 @@ def test_stock_policy_and_public_schema_are_exposed_to_model(client, fake_gemini
     spec = TOOLS["get_stock_price_comparison"]
     assert spec.scopes(None) == []
     assert spec.declaration().parameters_json_schema["required"] == ["symbol", "start_date", "end_date"]
-    assert prompts.PROMPT_VERSION == "gill-v6"
+    assert prompts.PROMPT_VERSION == "gill-v7"

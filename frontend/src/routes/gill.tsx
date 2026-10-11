@@ -12,13 +12,14 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-// Search carries navigation context, never financial records.
+// Search carries navigation context. Guest peer buttons may explicitly supply labeled demo figures;
+// signed-in financial records are read only through Gill's consent-gated tools.
 export const Route = createFileRoute("/gill")({
   validateSearch: (search: Record<string, unknown>) => ({
     returnTo: safeReturn(search["returnTo"]),
     initialQuestion:
       typeof search["initialQuestion"] === "string"
-        ? search["initialQuestion"].slice(0, 2000)
+        ? search["initialQuestion"].slice(0, 16000)
         : "",
   }),
   head: () => ({ meta: [{ title: "Gill Gates — Bowl Street Journal" }] }),

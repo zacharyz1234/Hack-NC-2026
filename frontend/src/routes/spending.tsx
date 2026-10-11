@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { monthlyAnalysis } from "@/lib/finance-analysis";
 import { thisMonth } from "@/lib/api";
 import { money } from "@/lib/finance";
+import { PeerBudgetComparison } from "@/components/peer-budget-comparison";
 
 export const Route = createFileRoute("/spending")({
   head: () => ({
@@ -39,6 +40,7 @@ function SpendingPage() {
 function SpendingContent() {
   const { user, transactions } = useFinance();
   const [month, setMonth] = useState(user ? thisMonth() : DEMO_MONTH);
+  const [budgetRevision, setBudgetRevision] = useState(0);
   const analysis = monthlyAnalysis(transactions, month);
   const monthLabel = new Date(`${month}-01T12:00:00`).toLocaleDateString(
     "en-US",
@@ -72,7 +74,11 @@ function SpendingContent() {
         <div>
           <span>Money out</span>
           <strong>{money(analysis.spent)}</strong>
-          <small>Checking purchases</small>
+          <small>
+            {month === thisMonth()
+              ? "Month-to-date checking purchases"
+              : "Checking purchases"}
+          </small>
         </div>
         <div>
           <span>Net cash flow</span>
@@ -169,7 +175,13 @@ function SpendingContent() {
           )}
         </XPWindow>
       </div>
-      <BudgetEditor key={month} month={month} spending={analysis.categories} />
+      <BudgetEditor
+        key={month}
+        month={month}
+        spending={analysis.categories}
+        onSaved={() => setBudgetRevision((n) => n + 1)}
+      />
+      <PeerBudgetComparison month={month} budgetRevision={budgetRevision} />
       <p className="finance-fine">
         Savings activity and unassigned transactions are excluded from checking
         cash flow. All charts use your recorded activity.
@@ -180,9 +192,11 @@ function SpendingContent() {
 function BudgetEditor({
   month,
   spending,
+  onSaved,
 }: {
   month: string;
   spending: { name: string; value: number }[];
+  onSaved: () => void;
 }) {
   const { categories, loadBudget, saveBudget } = useFinance();
   const [draft, setDraft] = useState<Budget>({});
@@ -242,6 +256,7 @@ function BudgetEditor({
             setFailed(false);
             try {
               await saveBudget(month, draft);
+              onSaved();
               setMessage("Budget saved.");
             } catch (err) {
               setFailed(true);

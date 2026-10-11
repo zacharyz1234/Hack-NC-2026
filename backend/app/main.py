@@ -14,6 +14,7 @@ from app.routes import (
     expenses,
     health,
     nessie,
+    peer_budgets,
     savings_goals,
     stocks,
     transactions,
@@ -37,6 +38,7 @@ app.include_router(budgets.router)
 app.include_router(savings_goals.router)
 app.include_router(expenses.router)
 app.include_router(nessie.router)
+app.include_router(peer_budgets.router)
 app.include_router(assistant.router)
 app.include_router(consents.router)
 app.include_router(stocks.router)
