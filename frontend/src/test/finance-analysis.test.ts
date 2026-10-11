@@ -15,6 +15,21 @@ const entry = (
   account: "checking",
 });
 describe("monthly checking analysis", () => {
+  it("preserves custom names that overlap JavaScript object keys", () => {
+    const result = monthlyAnalysis(
+      [
+        entry("a", -1, "2026-10-01", "constructor"),
+        entry("b", -2, "2026-10-01", "__proto__"),
+      ],
+      "2026-10",
+      new Date(2026, 9, 10),
+    );
+    expect(result.spent).toBe(3);
+    expect(result.categories).toEqual([
+      { name: "__proto__", value: 2 },
+      { name: "constructor", value: 1 },
+    ]);
+  });
   it("reconciles daily and category totals while excluding savings and other months", () => {
     const result = monthlyAnalysis(
       [
@@ -44,6 +59,7 @@ describe("monthly checking analysis", () => {
         entry("c", -1, "2028-03-01"),
       ],
       "2028-02",
+      new Date(2028, 1, 29),
     );
     expect(result.spent).toBe(0.3);
     expect(result.daily).toHaveLength(29);

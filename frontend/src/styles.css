@@ -429,6 +429,7 @@ html[data-dive="surfacing"] .wallpaper{transform-origin:var(--dive-origin,62% 40
 @keyframes bee-pop{from{opacity:0;transform:translateY(6px) scale(.96)}}
 @media(max-width:600px){.sunflowers-meadow{display:none}.sunflowers-bee{right:auto;left:-6px;height:105px;max-width:none}.sunflowers-bee>img{object-position:left bottom}.bee-bubble{right:auto;left:28%;bottom:70%}.bee-bubble::after{right:auto;left:10%}}
 
+<<<<<<< Updated upstream
 
 /* Bowl Street's roadside sign sits down on the meadow in front of the skyline. */
 .home-grid .city-overlay{inset:0;top:0;bottom:0;padding:0;background:none;pointer-events:none;z-index:1}
@@ -466,3 +467,18 @@ html[data-dive="surfacing"] .wallpaper{transform-origin:var(--dive-origin,62% 40
 .city-plane{position:absolute;right:-2%;top:4%;width:clamp(140px,17vw,300px);height:auto;pointer-events:none;z-index:1;filter:drop-shadow(0 3px 5px oklch(.3 .08 240 / .25));animation:plane-drift 10s ease-in-out infinite alternate}
 @keyframes plane-drift{from{transform:translate(-6px,4px)}to{transform:translate(8px,-5px)}}
 @media(max-width:600px){.city-plane{width:110px;top:0}}
+=======
+/* Fictional peer comparisons keep all table columns accessible on narrow screens. */
+.peer-budget-window { margin-top: 1.5rem; min-width: 0; }
+.peer-match-form { display: flex; flex-wrap: wrap; align-items: end; gap: 1rem; margin: 1rem 0; }
+.peer-match-form label { display: grid; gap: .4rem; flex: 1 1 12rem; }
+.peer-profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: .75rem; margin: 1rem 0; }
+.peer-profile { display: grid; gap: .5rem; text-align: left; white-space: normal; padding: 1rem; cursor: pointer; }
+.peer-profile.selected { outline: 2px solid var(--primary); outline-offset: 1px; }
+.peer-table-scroll { max-width: 100%; overflow-x: auto; margin: 1rem 0; }
+.peer-comparison-table { width: 100%; min-width: 740px; border-collapse: collapse; font-size: .9rem; }
+.peer-comparison-table caption { text-align: left; padding-bottom: .75rem; }
+.peer-comparison-table th, .peer-comparison-table td { border-bottom: 1px solid var(--border); padding: .7rem; text-align: right; white-space: nowrap; }
+.peer-comparison-table th:first-child { text-align: left; white-space: normal; }
+.peer-comparison-table tfoot { font-weight: 600; }
+>>>>>>> Stashed changes

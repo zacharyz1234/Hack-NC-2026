@@ -28,7 +28,7 @@ class Period:
 
     @property
     def phrase(self) -> str:
-        return PHRASES[self.name]
+        return PHRASES.get(self.name, self.label)
 
     def as_json(self) -> dict:
         return {"name": self.name, "start": self.start.isoformat(), "end": self.end.isoformat(), "label": self.label}

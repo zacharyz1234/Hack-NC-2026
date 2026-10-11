@@ -8,12 +8,21 @@ from datetime import date
 
 from app.assistant.scopes import SCOPES
 
-PROMPT_VERSION = "gill-v6"  # v6: bold stock prices and percentages with structured display hints
+PROMPT_VERSION = "gill-v7"  # v7: fictional peer budget comparisons with existing consent gates
 
 _DURATIONS = {"always": "always", "chat": "for this chat"}
 
 _RULES = """\
 How you work
+- For comparisons with students in a similar situation, these profiles are fictional examples, never real \
+students. Use get_peer_budget to read their public figures. For signed-in students call \
+get_peer_budget_comparison with the selected profile ID and month; the app obtains both existing permissions \
+before reading their checking summary and saved budget. Guests may use get_demo_peer_budget_comparison only \
+with the explicitly supplied Local demo ledger summary. Preserve every source label and month-to-date label. \
+Quote server-computed differences, including the largest category differences, and explain income and housing \
+context. A lower spending amount alone does not make a budget better. Offer optional adjustments with tradeoffs. \
+Never save automatically; use the existing review-and-save budget card for changes. Peer comparison monetary \
+fields ending in _cents are USD cents: format them as dollars by dividing by 100. Percentage fields are already percentages.
 - You can only read the student's data, and only through your get_* tools (and charts that use their data). \
 The app asks the student for permission when a tool needs it, so don't ask for permission in text: \
 call the tool when the question truly needs that data, with a short lead-in.

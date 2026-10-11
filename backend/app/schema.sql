@@ -141,6 +141,25 @@ CREATE TABLE IF NOT EXISTS assistant_consents (
 );
 CREATE INDEX IF NOT EXISTS assistant_consents_user_scope ON assistant_consents(user_id, scope);
 
+--- Fictional peers only: never link these rows to users or their banking records.
+CREATE TABLE IF NOT EXISTS demo_peer_profiles (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    housing TEXT NOT NULL,
+    monthly_income_cents INTEGER NOT NULL,
+    nessie_customer_id TEXT,
+    nessie_account_id TEXT
+);
+CREATE TABLE IF NOT EXISTS demo_peer_snapshots (
+    profile_id TEXT NOT NULL REFERENCES demo_peer_profiles(id),
+    month TEXT NOT NULL,
+    budgets_json TEXT NOT NULL,
+    activity_json TEXT NOT NULL,
+    source TEXT NOT NULL CHECK (source = 'nessie'),
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (profile_id, month)
+);
+
 
 --- Gill Gates audit log: what happened and when. Never amounts, balances or descriptions.
 CREATE TABLE IF NOT EXISTS assistant_audit_log (

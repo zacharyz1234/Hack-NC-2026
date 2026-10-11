@@ -93,6 +93,7 @@ cd ../frontend && npm test
 | Checking & savings balances | `GET /accounts` |
 | Recent purchases, add / edit / delete a transaction | `GET/POST /transactions`, `PATCH/DELETE /transactions/{id}` |
 | Spending analysis, budget planner | `GET /transactions`, `GET/PUT /budgets/{month}`, `GET /categories` |
+| Fictional student budget comparisons | `POST /peer-budgets/matches`, `POST /peer-budgets/compare` |
 | Savings goal | `GET/POST /savings-goals`, `PATCH /savings-goals/{id}` |
 | Connect demo bank / Refresh bank data | `POST /nessie/connect-demo`, `POST /nessie/sync` |
 | Gill chat, permission cards, Gill's cards | `/assistant/sessions/...` (see the contract doc) |
@@ -125,6 +126,17 @@ Ask, for example, "What was NVIDIA's price between May 10, 2026 and June 10, 202
 Stock quotes and searches share the webpage's caches. Historical comparisons reuse cached daily chart data when it covers the requested dates; otherwise one bounded daily-history request is cached for 24 hours. Current quotes include their timestamp and hourly cache notice. Missing data or quota errors are reported without invented prices. Gill's prompt and tool descriptions restrict stock answers to facts and explicitly prohibit buy/sell/hold recommendations, allocations, price targets, and predictions.
 
 ## Notes for the team
+
+### Students in a similar situation
+
+Spending now matches twelve fictional student scenarios by housing and monthly income.
+Select a profile to compare saved budgets and checking activity for the page's month,
+including month-to-date figures, totals and cash flow. Guest comparisons use the labeled
+local demo ledger. **Ask Gill to compare** uses existing consent gates for signed-in
+financial figures and offers optional changes through the existing review/Save flow.
+Fictional sample data works immediately. To provision/refresh Nessie sandbox snapshots,
+run from `backend`: `.\.venv\Scripts\python.exe -m app.services.peer_budget_setup --month 2026-10`.
+See [peer comparison setup and API](docs/PEER_BUDGETS.md) for source labels and recovery behavior.
 
 - **Lovable sync:** `frontend/` is a copy of the Lovable project. Lovable only syncs with the GitHub repo it's connected to, so edits here don't flow back to Lovable automatically (and vice versa). Pick one place to keep editing.
 - **No Supabase / Lovable AI:** sign-in, Gill's chat and Gill's voice all go through `backend/`. The Lovable-generated Supabase auth, its chat-history table, the `/api/chat` route (Lovable AI gateway) and the `/api/voice` route (ElevenLabs called from the frontend server) were removed. If Lovable offers to "reconnect Supabase", say no.

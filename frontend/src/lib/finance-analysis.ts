@@ -5,12 +5,20 @@ export function newestFirst(rows: Transaction[]) {
     (a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id),
   );
 }
-export function monthlyAnalysis(rows: Transaction[], month: string) {
+export function monthlyAnalysis(
+  rows: Transaction[],
+  month: string,
+  on = new Date(),
+) {
+  const cutoff = `${on.getFullYear()}-${String(on.getMonth() + 1).padStart(2, "0")}-${String(on.getDate()).padStart(2, "0")}`;
   const selected = rows.filter(
-    (t) => t.account === "checking" && t.date.startsWith(`${month}-`),
+    (t) =>
+      t.account === "checking" &&
+      t.date.startsWith(`${month}-`) &&
+      t.date <= cutoff,
   );
-  const categoryCents: Record<string, number> = {};
-  const dailyCents: Record<string, number> = {};
+  const categoryCents: Record<string, number> = Object.create(null);
+  const dailyCents: Record<string, number> = Object.create(null);
   let incomeCents = 0;
   let spentCents = 0;
   for (const t of selected) {
