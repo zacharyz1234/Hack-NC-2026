@@ -331,8 +331,8 @@ def _run_savings_calculator(ctx: ToolContext, args: SavingsCalculatorArgs) -> Ou
 
 
 class ExpenseDraftArgs(_Args):
-    amount: float = Field(gt=0, le=10_000)
-    description: str = Field(min_length=1, max_length=60)
+    amount: float | None = Field(None, gt=0, le=10_000, description="Dollars, if the student said. Leave out if unknown.")
+    description: str = Field("", max_length=60, description="What they bought, e.g. 'Coffee at Cosmic Cantina'.")
     category: Name | None = Field(None, description="An app category name, if one fits.")
     spent_on: str | None = Field(None, description="YYYY-MM-DD. Defaults to today; can't be in the future.")
 
@@ -343,7 +343,7 @@ def _run_expense_draft(ctx: ToolContext, args: ExpenseDraftArgs) -> Outcome:
         raise ToolError("invalid_arguments", "spent_on must be within the last year and not in the future.")
     category = ctx.find_category(args.category) if args.category else None
     props = {
-        "amount": _money(args.amount),
+        "amount": _money(args.amount) if args.amount is not None else None,
         "description": data.clean_text(args.description, 60),
         "category_id": category["id"] if category else None,
         "category": category["name"] if category else None,
@@ -356,7 +356,9 @@ def _run_expense_draft(ctx: ToolContext, args: ExpenseDraftArgs) -> Outcome:
         "resolved_category": props["category"],
         "date": props["date"],
         "can_save": ctx.signed_in,
-        "message": "Only the student can add it, with the card's Add button.",
+        "message": "Only the student can add it, with the card's Add purchase button. They can fill in or "
+        "change anything first."
+        + ("" if ctx.signed_in else " As a guest, it goes into their demo ledger, not a real account."),
     }
     return Outcome(result=result, component="expense_draft", props=props)
 
@@ -557,7 +559,9 @@ _SPECS = [
     ),
     ToolSpec(
         "show_expense_draft", "display",
-        "Show a pre-filled expense the student can add with one click, e.g. after 'I just spent $12 on lunch'. "
+        "Quick add: show a small purchase form, pre-filled with whatever the student told you, that they can "
+        "add to their ledger with one tap. Use it whenever they mention something they just bought or want to "
+        "log a purchase (e.g. 'I just spent $12 on lunch'), even if you don't know the amount yet. "
         "You cannot add it yourself.",
         ExpenseDraftArgs, _run_expense_draft,
     ),

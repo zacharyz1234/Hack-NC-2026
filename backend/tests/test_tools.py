@@ -77,6 +77,17 @@ def test_guest_cards_cannot_save(client):
     assert outcome.props["date"] == "2026-10-10"
 
 
+def test_quick_add_can_open_blank(client):
+    outcome = run(client, "show_expense_draft", signed_in=False)
+    assert (outcome.props["amount"], outcome.props["description"], outcome.props["category"]) == (None, "", None)
+    assert outcome.props["date"] == "2026-10-10"
+    assert "demo ledger" in outcome.result["message"]
+
+    signed_in = run(client, "show_expense_draft", amount=4.5, description="Coffee")
+    assert (signed_in.props["amount"], signed_in.props["description"]) == (4.5, "Coffee")
+    assert "demo ledger" not in signed_in.result["message"]
+
+
 def test_expense_draft_rejects_future_dates(client):
     with pytest.raises(ToolError):
         run(client, "show_expense_draft", amount=12, description="Lunch", spent_on="2026-12-25")

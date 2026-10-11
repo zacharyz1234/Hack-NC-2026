@@ -5,6 +5,7 @@ export const returnDestinations = [
   "/accounts",
   "/spending",
   "/purchases",
+  "/quick-add",
 ] as const;
 export type ReturnDestination = (typeof returnDestinations)[number];
 export function safeReturn(value: unknown): ReturnDestination {

@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { Check, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { QuickAddForm } from "@/components/quick-add";
 import { api, cents, type Goal } from "@/lib/api";
 import { money } from "@/lib/finance";
 import {
@@ -405,104 +406,18 @@ function ExpenseDraft({
   p,
   onSaved,
 }: { p: CardProps<"expense_draft"> } & Handlers) {
-  const [draft, setDraft] = useState({
-    amount: p.amount,
-    description: p.description,
-    category_id: p.category_id,
-    date: p.date,
-  });
-  const { state, error, save } = useSave(onSaved, "expense");
-  const locked = state === "saved";
   return (
-    <Card title="New expense">
-      <div className="form-grid">
-        <div>
-          <label className="field-label" htmlFor="draft-desc">
-            Description
-          </label>
-          <input
-            className="xp-input"
-            id="draft-desc"
-            disabled={locked}
-            value={draft.description}
-            onChange={(e) =>
-              setDraft({ ...draft, description: e.target.value })
-            }
-          />
-        </div>
-        <div>
-          <label className="field-label" htmlFor="draft-amount">
-            Amount
-          </label>
-          <input
-            className="xp-input"
-            id="draft-amount"
-            type="number"
-            min="0.01"
-            step="0.01"
-            disabled={locked}
-            value={draft.amount}
-            onChange={(e) =>
-              setDraft({ ...draft, amount: Number(e.target.value) })
-            }
-          />
-        </div>
-        <div>
-          <label className="field-label" htmlFor="draft-category">
-            Category
-          </label>
-          <select
-            className="xp-input"
-            id="draft-category"
-            disabled={locked}
-            value={draft.category_id ?? ""}
-            onChange={(e) =>
-              setDraft({
-                ...draft,
-                category_id: e.target.value ? Number(e.target.value) : null,
-              })
-            }
-          >
-            <option value="">No category</option>
-            {p.category_options.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="field-label" htmlFor="draft-date">
-            Date
-          </label>
-          <input
-            className="xp-input"
-            id="draft-date"
-            type="date"
-            disabled={locked}
-            value={draft.date}
-            onChange={(e) => setDraft({ ...draft, date: e.target.value })}
-          />
-        </div>
-      </div>
-      {error && <p className="chat-error">{error}</p>}
-      <div className="mt-3">
-        <SaveButton
-          label="Add expense"
-          canSave={p.can_save}
-          state={state}
-          onClick={() =>
-            save(() =>
-              api("/expenses", "POST", {
-                amount_cents: cents(draft.amount),
-                description: draft.description,
-                category_id: draft.category_id,
-                spent_on: draft.date,
-              }),
-            )
-          }
-        />
-      </div>
+    <Card title="Quick add">
+      <QuickAddForm
+        keepOpen={false}
+        initial={{
+          amount: p.amount,
+          description: p.description,
+          category: p.category,
+          date: p.date,
+        }}
+        onAdded={() => onSaved("expense")}
+      />
     </Card>
   );
 }

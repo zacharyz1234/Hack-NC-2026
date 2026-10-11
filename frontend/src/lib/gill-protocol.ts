@@ -117,7 +117,7 @@ export const cardSchemas = {
     can_save: z.boolean(),
   }),
   expense_draft: z.object({
-    amount: money,
+    amount: money.nullable(),
     description: z.string(),
     category_id: z.number().int().nullable(),
     category: z.string().nullable(),

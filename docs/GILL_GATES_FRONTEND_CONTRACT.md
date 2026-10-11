@@ -169,8 +169,8 @@ export interface SavingsCalculatorProps {
 }
 
 export interface ExpenseDraftProps {
-  amount: number;
-  description: string;
+  amount: number | null; // null when the student didn't say
+  description: string;   // may be ""
   category_id: number | null;
   category: string | null;
   date: string; // "2026-10-10"
@@ -341,12 +341,12 @@ A proposed monthly budget the student can edit and save.
   - `required_monthly = ceil(remainingCents / months_until_target_date) / 100` (rounded **up** to the cent)
 - **Create goal button** (only if `can_save`): `POST /savings-goals { name: goal_name, target_cents, saved_cents, target_date }`, then toast "Goal created" and `POST …/events { type: "user_saved", target: "savings_goal" }`.
 
-### 7.6 `expense_draft` — display + Add
+### 7.6 `expense_draft` — Quick add
 
-A pre-filled expense, e.g. after "I just spent $12 on lunch".
+A pre-filled purchase form, e.g. after "I just spent $12 on lunch". Gill can open it with nothing filled in.
 
-- **Show:** editable amount, description, category (dropdown of `category_options`, preselect `category_id`), and date.
-- **Add button** (only if `can_save`): `POST /expenses { amount_cents, description, category_id, spent_on: date }`, then toast "Expense added" and `POST …/events { type: "user_saved", target: "expense" }`.
+- **Show:** the same `QuickAddForm` as the app's Quick Add tab (`src/components/quick-add.tsx`): amount, what they bought, category chips (the app's own categories, plus `category` if Gill suggested one that isn't in the list), when (Today / Yesterday / Other day), and which account paid.
+- **Add purchase button:** saves through the app's `saveTransaction` (`POST /transactions` with a negative `amount_cents` when signed in, or the demo ledger for guests), then `POST …/events { type: "user_saved", target: "expense" }`. The card locks after saving. Guests can add to their demo ledger, so `can_save` no longer hides the button.
 
 ### 7.7 `scenario_comparison` — display
 
@@ -545,7 +545,7 @@ Answer: `POST /assistant/sessions/as_4fQ2…/consent` with `{ "request_id": "cr_
 - [ ] zod schemas for all 8 component props; invalid props are not rendered.
 - [ ] Input cards: `budget_slider`, `category_picker`, `amount_form` → `/submit`; dismiss sends `dismissed: true`; cards disable after answering or when the student types.
 - [ ] Display cards: `scenario_comparison`, `spending_chart`.
-- [ ] Save cards: `budget_plan` → `PUT /budgets/{month}`, `savings_calculator` → `POST /savings-goals`, `expense_draft` → `POST /expenses`; then `POST …/events`; app toast; "Log in to save" for guests.
+- [ ] Save cards: `budget_plan` → `PUT /budgets/{month}`, `savings_calculator` → `POST /savings-goals`, `expense_draft` → `POST /transactions` (guests: demo ledger); then `POST …/events`; app toast; "Log in to save" for guests on the other two.
 - [ ] Consent card with one choice per item, backend text only, equal-weight "No thanks".
 - [ ] "Gill looked at…" chips.
 - [ ] Settings → Gill Gates & privacy: consents list with "Turn off", voice toggle (off by default), clear chat, hide Gill.

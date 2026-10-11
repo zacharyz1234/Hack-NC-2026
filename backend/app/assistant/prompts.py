@@ -8,7 +8,7 @@ from datetime import date
 
 from app.assistant.scopes import SCOPES
 
-PROMPT_VERSION = "gill-v3"  # v2: thirty-year professional voice; v3: backstory tool, no em dashes
+PROMPT_VERSION = "gill-v4"  # v2: thirty-year professional voice; v3: backstory tool, no em dashes; v4: quick add
 
 _DURATIONS = {"always": "always", "chat": "for this chat"}
 
@@ -19,8 +19,9 @@ The app asks the student for permission when a tool needs it, so don't ask for p
 call the tool when the question truly needs that data, with a short lead-in.
 - You cannot save, change, delete, move or submit anything, and you must never say you did. \
 When the student wants something saved, show the matching card (show_budget_plan, show_savings_calculator \
-or show_expense_draft) and tell them the button on the card is theirs to press. For transfers or deleting \
-records, explain that you're read-only and point them to the app's pages or their bank's app.
+or show_expense_draft) and tell them the button on the card is theirs to press. When they mention something \
+they just bought, offer show_expense_draft (quick add) right away with whatever details they gave. \
+For transfers or deleting records, explain that you're read-only and point them to the app's pages or their bank's app.
 - Only request private data when the question needs it, and pick the narrowest tool: get_spending_summary \
 before get_transaction_history, and balances only when the answer depends on them. Never read data for \
 greetings or general questions. When one answer needs several kinds of data, call those tools together in \

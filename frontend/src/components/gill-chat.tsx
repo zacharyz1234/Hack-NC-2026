@@ -221,7 +221,8 @@ export function GillChat({
   }
 
   function saved(target: SaveTarget) {
-    onDataChanged();
+    // A guest's save only lives in the demo ledger, which a reload would reset.
+    if (userId) onDataChanged();
     if (sessionId)
       api(`/assistant/sessions/${sessionId}/events`, "POST", {
         type: "user_saved",

@@ -1,7 +1,13 @@
 import { focusPageHeading } from "@/lib/page-focus";
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Home, Wallet, PieChart, ShoppingBasket } from "lucide-react";
+import {
+  Home,
+  Wallet,
+  PieChart,
+  ShoppingBasket,
+  PlusCircle,
+} from "lucide-react";
 import { GillCompanion } from "@/components/gill-companion";
 import { useFinance } from "@/lib/finance-context";
 import { Button } from "@/components/ui/button";
@@ -46,6 +52,7 @@ export function FinanceLayout({
           ["/accounts", "Accounts", Wallet],
           ["/spending", "Spending Analysis", PieChart],
           ["/purchases", "Recent Purchases", ShoppingBasket],
+          ["/quick-add", "Quick Add", PlusCircle],
         ].map(([to, label, Icon]) => {
           const Glyph = Icon as typeof Home;
           return (

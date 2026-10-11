@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccountsRouteImport } from './routes/accounts'
 import { Route as GillRouteImport } from './routes/gill'
 import { Route as PurchasesRouteImport } from './routes/purchases'
+import { Route as QuickAddRouteImport } from './routes/quick-add'
 import { Route as SpendingRouteImport } from './routes/spending'
 
 const IndexRoute = IndexRouteImport.update({
@@ -35,6 +36,11 @@ const PurchasesRoute = PurchasesRouteImport.update({
   path: '/purchases',
   getParentRoute: () => rootRouteImport,
 } as any)
+const QuickAddRoute = QuickAddRouteImport.update({
+  id: '/quick-add',
+  path: '/quick-add',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SpendingRoute = SpendingRouteImport.update({
   id: '/spending',
   path: '/spending',
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/accounts': typeof AccountsRoute
   '/gill': typeof GillRoute
   '/purchases': typeof PurchasesRoute
+  '/quick-add': typeof QuickAddRoute
   '/spending': typeof SpendingRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/accounts': typeof AccountsRoute
   '/gill': typeof GillRoute
   '/purchases': typeof PurchasesRoute
+  '/quick-add': typeof QuickAddRoute
   '/spending': typeof SpendingRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,23 @@ export interface FileRoutesById {
   '/accounts': typeof AccountsRoute
   '/gill': typeof GillRoute
   '/purchases': typeof PurchasesRoute
+  '/quick-add': typeof QuickAddRoute
   '/spending': typeof SpendingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/accounts' | '/gill' | '/purchases' | '/spending'
+  fullPaths:
+    '/' | '/accounts' | '/gill' | '/purchases' | '/quick-add' | '/spending'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/accounts' | '/gill' | '/purchases' | '/spending'
-  id: '__root__' | '/' | '/accounts' | '/gill' | '/purchases' | '/spending'
+  to: '/' | '/accounts' | '/gill' | '/purchases' | '/quick-add' | '/spending'
+  id:
+    | '__root__'
+    | '/'
+    | '/accounts'
+    | '/gill'
+    | '/purchases'
+    | '/quick-add'
+    | '/spending'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +93,7 @@ export interface RootRouteChildren {
   AccountsRoute: typeof AccountsRoute
   GillRoute: typeof GillRoute
   PurchasesRoute: typeof PurchasesRoute
+  QuickAddRoute: typeof QuickAddRoute
   SpendingRoute: typeof SpendingRoute
 }
 
@@ -109,6 +127,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PurchasesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/quick-add': {
+      id: '/quick-add'
+      path: '/quick-add'
+      fullPath: '/quick-add'
+      preLoaderRoute: typeof QuickAddRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/spending': {
       id: '/spending'
       path: '/spending'
@@ -124,6 +149,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountsRoute: AccountsRoute,
   GillRoute: GillRoute,
   PurchasesRoute: PurchasesRoute,
+  QuickAddRoute: QuickAddRoute,
   SpendingRoute: SpendingRoute,
 }
 export const routeTree = rootRouteImport
