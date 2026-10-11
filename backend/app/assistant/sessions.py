@@ -1,9 +1,9 @@
 """Storage for Gill Gates chats.
 
 A session row holds the Gemini transcript (so the model sees the conversation), any tool calls
-waiting on the student (`pending`), and small bookkeeping (`meta`). Chats belong to one user (or
-one guest), expire after ASSISTANT_SESSION_TTL_HOURS idle, and are wiped when the student turns
-off access to data they contain.
+waiting on the student (`pending`), and small bookkeeping (`meta`). Chats belong to one user, expire
+after ASSISTANT_SESSION_TTL_HOURS idle, and are wiped when the student turns off access to data they
+contain.
 """
 import json
 import secrets
@@ -51,7 +51,7 @@ def create(user_id: int | None, prompt_version: str) -> Session:
 
 
 def load(session_id: str, user_id: int | None) -> Session | None:
-    """The chat, if it exists, hasn't expired, and belongs to this user (or to a guest when user_id is None)."""
+    """The chat, if it exists, hasn't expired, and belongs to this user."""
     with get_conn() as conn:
         row = conn.execute(
             "SELECT * FROM assistant_sessions WHERE id = ? AND user_id IS ? AND updated_at >= ?",

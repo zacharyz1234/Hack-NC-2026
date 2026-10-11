@@ -7,7 +7,7 @@ from app.assistant import prompts, stock_facts
 from app.assistant.tools import TOOLS
 from app.routes import stocks
 from app.services import twelve_data
-from tests.conftest import call, open_chat, reply, say, say_to_gill
+from tests.conftest import call, open_chat, reply, say, say_to_gill, signup
 
 
 @pytest.fixture
@@ -42,6 +42,8 @@ def market(monkeypatch):
 
 
 def ask(client, fake_gemini, name, **args):
+    if "Authorization" not in client.headers:  # Gill needs a login; stock facts still need no data consent
+        client.headers.update(signup(client))
     sid = open_chat(client)
     fake_gemini.script(reply(call(name, **args)), reply(say("Here are the stock facts.")))
     turn = say_to_gill(client, None, sid, "Tell me the stock facts.")
@@ -58,7 +60,7 @@ def ask(client, fake_gemini, name, **args):
     return result
 
 
-def test_guest_resolves_company_and_gets_current_quote_without_consent(client, fake_gemini, market):
+def test_student_resolves_company_and_gets_current_quote_without_consent(client, fake_gemini, market):
     result = ask(client, fake_gemini, "get_stock_search", query="Nvidia")
     assert result["results"][0]["symbol"] == "NVDA"
     quote = ask(client, fake_gemini, "get_stock_quote", symbol="nvda")

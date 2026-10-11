@@ -3,6 +3,7 @@ import pytest
 from google.genai import errors
 
 from app.services import gemini
+from tests.conftest import signup
 
 
 class FakeModels:
@@ -81,8 +82,9 @@ def test_chat_reports_invalid_key_without_exposing_provider_details(client, monk
         raise gemini.GeminiUnavailable("secret-provider-detail", "Gill's AI service API key is invalid.")
 
     monkeypatch.setattr(gemini, "chat_step", fail)
-    session = client.post("/assistant/sessions").json()["session_id"]
-    response = client.post(f"/assistant/sessions/{session}/messages", json={"text": "Hello"})
+    headers = signup(client)
+    session = client.post("/assistant/sessions", headers=headers).json()["session_id"]
+    response = client.post(f"/assistant/sessions/{session}/messages", json={"text": "Hello"}, headers=headers)
     assert response.status_code == 503
     assert response.json()["detail"] == "Gill's AI service API key is invalid."
     assert "secret-provider-detail" not in response.text

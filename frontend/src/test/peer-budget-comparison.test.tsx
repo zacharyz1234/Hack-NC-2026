@@ -193,7 +193,7 @@ describe("fictional peer comparison", () => {
     expect(screen.getByText(/Lower spending alone/)).toBeInTheDocument();
   });
 
-  it("sends only explicitly labeled guest checking data to Gill on button action", async () => {
+  it("hands guests the same permission-gated question without any ledger figures, and tells them to sign in", async () => {
     render(<PeerBudgetComparison month="2026-10" />);
     find();
     fireEvent.click(
@@ -201,14 +201,16 @@ describe("fictional peer comparison", () => {
     );
     const [destination, question] = mocks.openGill.mock.calls[0]!;
     expect(destination).toBe("/spending");
-    expect(question).toContain("get_demo_peer_budget_comparison");
-    expect(question).toContain('"source":"Local demo ledger"');
-    expect(question).toContain('"category":"Eating out"');
-    expect(question).toContain('"spending_cents":1234');
-    expect(question).not.toContain('"spending_cents":9900');
+    expect(question).toContain("get_peer_budget_comparison");
     expect(question).toContain("peer-shared_rental-2000");
     expect(question).toContain("2026-10");
-    expect(question).toContain("not my personal finances");
+    expect(question).not.toContain("get_demo_peer_budget_comparison");
+    expect(question).not.toContain("Local demo ledger");
+    expect(question).not.toContain("spending_cents");
+    expect(question).not.toContain("1234");
+    expect(
+      screen.getByText("Sign in to ask Gill about this comparison."),
+    ).toBeInTheDocument();
   });
 
   it("keeps signed-in financial values out of Gill navigation and asks for permissions", async () => {

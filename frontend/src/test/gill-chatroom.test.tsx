@@ -121,9 +121,7 @@ class FakeAudioContext {
   }
 }
 const props = {
-  userId: null,
   onClose: vi.fn(),
-  onSignIn: vi.fn(),
   onDataChanged: vi.fn(),
   onMute: vi.fn(),
 };

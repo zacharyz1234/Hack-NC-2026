@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS accounts (
 
 
 --- Gill Gates chats. transcript, pending and meta are JSON (see app/assistant/orchestrator.py).
---- user_id NULL = guest. Rows are deleted after ASSISTANT_SESSION_TTL_HOURS without activity.
+--- user_id is always set now (Gill requires a login); NULL rows are old guest chats nobody can open. Rows are deleted after ASSISTANT_SESSION_TTL_HOURS without activity.
 CREATE TABLE IF NOT EXISTS assistant_sessions (
     id TEXT PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,

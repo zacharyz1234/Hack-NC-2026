@@ -80,7 +80,7 @@ cd ../frontend && npm test
 
 ### Try it
 
-- **As a guest:** the dashboard shows the built-in demo ledger, and Gill chats without reading any data.
+- **As a guest:** the dashboard shows the built-in demo ledger. Gill needs an account, so opening him asks you to sign in first (the backend rejects every `/assistant` call without a login).
 - **Signed in:** click **Sign in** and use the demo student from step 1. The email and password are in `backend/scripts/seed_demo.py`. Or create your own account and click **Connect demo bank** to get a Nessie sandbox bank (needs `NESSIE_API_KEY`).
 - Ask Gill **"Where could I cut spending?"**. A permission card appears; allow it and Gill answers from your real totals.
 - **My account** → **What Gill may read** lists each permission and lets you turn it off.
@@ -119,7 +119,7 @@ Refreshes and caches are shared within one backend process. Run one API worker f
 
 ## Gill's stock information tools
 
-Gill resolves US company names/tickers (`get_stock_search`), reports the latest available USD quote and daily dollar/percentage change (`get_stock_quote`), and compares explicitly dated daily prices (`get_stock_price_comparison`). These public tools work for guests and signed-in users without reading personal financial data or asking for data-access consent. The API key stays in the backend.
+Gill resolves US company names/tickers (`get_stock_search`), reports the latest available USD quote and daily dollar/percentage change (`get_stock_quote`), and compares explicitly dated daily prices (`get_stock_price_comparison`). These public tools need no data-access consent and read no personal financial data. Like all of Gill, they require a signed-in user. The API key stays in the backend.
 
 Ask, for example, "What was NVIDIA's price between May 10, 2026 and June 10, 2026?" Gill reports both requested and actual trading dates, both prices, the direction, and server-computed dollar and percentage changes. Missing years prompt clarification. Non-trading dates use the most recent available session within the preceding seven days, with its date disclosed. Future dates and ranges longer than ten years are rejected. Daily prices are split-adjusted and exclude dividends/total return; the current session may be incomplete.
 
@@ -131,8 +131,8 @@ Stock quotes and searches share the webpage's caches. Historical comparisons reu
 
 Spending now matches twelve fictional student scenarios by housing and monthly income.
 Select a profile to compare saved budgets and checking activity for the page's month,
-including month-to-date figures, totals and cash flow. Guest comparisons use the labeled
-local demo ledger. **Ask Gill to compare** uses existing consent gates for signed-in
+including month-to-date figures, totals and cash flow. Guest comparisons on the page use the labeled
+local demo ledger. **Ask Gill to compare** asks guests to sign in first, then uses existing consent gates for
 financial figures and offers optional changes through the existing review/Save flow.
 Fictional sample data works immediately. To provision/refresh Nessie sandbox snapshots,
 run from `backend`: `.\.venv\Scripts\python.exe -m app.services.peer_budget_setup --month 2026-10`.

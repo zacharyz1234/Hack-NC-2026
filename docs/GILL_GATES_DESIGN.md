@@ -46,7 +46,7 @@ React (Lovable)  ──HTTP──▶  app/routes/assistant.py      chat: session
 | Bad arguments (pydantic, unknown fields rejected) | Result `{"error": "invalid_arguments", "details": [...]}`. Gemini usually corrects itself. |
 | Display card (`show_budget_plan`, …) | Server validates and computes the numbers, emits a `component` event, returns the computed numbers to Gemini. |
 | Input card (`show_budget_slider`, …) | Emits a `component` event with `awaits_input: true`. **The turn pauses.** |
-| Data tool, guest | Result `{"status": "not_available", "reason": "guest"}`. No consent card (there's nothing to share). |
+| Data tool, guest (not reachable over HTTP: Gill requires a login) | Result `{"status": "not_available", "reason": "guest"}`. No consent card (there's nothing to share). |
 | Data tool, student already declined it this turn | Result `{"status": "consent_denied"}` without asking again. |
 | Data tool, live grant covers it | Read-only query runs; a `data_access` chip tells the student what Gill looked at. |
 | Data tool, no grant | Emits one `consent_request` card for all missing data types in this step. **The turn pauses.** |
@@ -151,7 +151,7 @@ No tool takes a `user_id`; the user always comes from the bearer token. Unknown 
 - **Time windows** (transaction data only). A grant records how far back it reaches (e.g. 30 days). A later request reaching further back, say `last_90_days`, shows a new card. Balances and budgets have no window.
 - **Declining.** Gill gets `consent_denied` and offers the manual route. It won't re-ask within the same turn, and the system prompt tells it not to ask again in that chat unless the student brings it up.
 - **Typing instead of answering.** The pending request is closed as `consent_not_given`; a stale card then returns 409.
-- **Guests** have no data, so data tools return `not_available` and no card appears.
+- **Guests** can't reach Gill at all: every `/assistant/*` route returns 401 without a login. The tool layer still returns `not_available` for a missing user as a second line of defense.
 - **Turning access off** (`DELETE /consents/{scope}`):
   1. Every grant for that data type is revoked immediately.
   2. Every chat of that student that contains data of that type is **cleared**. Gemini is stateless and we resend the transcript each turn, so clearing is what actually stops the data (and Gill's replies that quoted it) from reaching Gemini again.
@@ -202,7 +202,7 @@ In a **new chat**, "Show me a chart of my budget vs spending" drew the chart wit
 
 > I've drafted that $12 lunch under "Eating out" for you—just click the **Add** button on the card whenever you're ready.
 
-**Guest asks "Where could I cut spending?"** → no card, no read:
+**Guest asks "Where could I cut spending?"** → (historical: guests can no longer open a chat; the API returns 401) no card, no read:
 
 > Since you're browsing as a guest, let's pick a few common categories to check out—tell me which ones take up the biggest bite of your budget.
 

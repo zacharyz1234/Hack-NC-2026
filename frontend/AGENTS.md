@@ -9,7 +9,7 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-- Use domain components for XP windows, finance calculations, market simulation, and Gill chat; guests use the demo ledger in React state, signed-in students load their data from the FastAPI backend (`src/lib/api.ts`).
+- Use domain components for XP windows, finance calculations, market simulation, and Gill chat; guests use the demo ledger in React state, signed-in students load their data from the FastAPI backend (`src/lib/api.ts`). Gill requires a signed-in student: the `/gill` route shows a sign-in desk to guests and the backend returns 401 for every `/assistant` call without a login.
 - Accounts, money data, Gill's chat (Gemini agent with consent cards) and Gill's voice (ElevenLabs) all live in the FastAPI backend in `../backend`. Don't add Supabase, a Lovable AI gateway route, or any API keys to the frontend. The protocol is `../docs/GILL_GATES_FRONTEND_CONTRACT.md`.
 - Compose chat with AI Elements; render only the allowlisted Gill cards in `src/components/gill-cards.tsx`, with props validated by `src/lib/gill-protocol.ts`.
 - Apply retro audio processing in the browser to the backend's speech audio; microphone dictation uses browser speech recognition with an explicit unavailable state.

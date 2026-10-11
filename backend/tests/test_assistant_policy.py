@@ -11,7 +11,7 @@ import pytest
 from app.assistant import data
 from app.assistant.scopes import BALANCES, BUDGET_GOALS, HISTORY, SUMMARY
 from app.assistant.tools import TOOLS
-from app.db import readonly_conn
+from app.db import get_conn, readonly_conn
 from app.services import elevenlabs
 from tests.conftest import (
     answer,
@@ -335,20 +335,52 @@ def test_consent_answer_must_cover_every_item(client, fake_gemini):
 
 # ---------- guests ----------
 
+ASSISTANT_ENDPOINTS = [
+    ("post", "/assistant/sessions", None),
+    ("post", "/assistant/sessions/as_x/messages", {"text": "hi"}),
+    ("post", "/assistant/sessions/as_x/consent", {"request_id": "x", "decisions": {}}),
+    ("post", "/assistant/sessions/as_x/submit", {"call_id": "x"}),
+    ("post", "/assistant/sessions/as_x/events", {"type": "user_saved", "target": "budget"}),
+    ("post", "/assistant/sessions/as_x/messages/m/speech", None),
+    ("post", "/assistant/sessions/as_x/messages/m/speech-aligned", None),
+    ("delete", "/assistant/sessions/as_x", None),
+]
 
-def test_guests_get_not_available_and_no_consent_card(client, fake_gemini):
-    sid = open_chat(client)
-    fake_gemini.script(
-        reply(call("get_spending_summary", period="last_30_days")),
-        reply(say("As a guest I don't have your data. What do you spend on food?")),
-    )
 
-    turn = say_to_gill(client, None, sid, QUESTION)
+@pytest.mark.parametrize("method,path,body", ASSISTANT_ENDPOINTS)
+def test_guests_cannot_use_gill(client, fake_gemini, method, path, body):
+    response = client.request(method.upper(), path, json=body)
 
-    assert turn["state"] == "ready"
-    assert not events_of(turn, "consent_request")
-    assert fake_gemini.last_results()[0]["response"]["status"] == "not_available"
-    assert "browsing as a guest" in fake_gemini.calls[0].system
+    assert response.status_code == 401, (path, response.status_code)
+    assert response.json()["detail"] == "Not logged in"
+    assert fake_gemini.calls == []
+    assert rows("SELECT * FROM assistant_sessions") == []
+
+
+@pytest.mark.parametrize("method,path,body", ASSISTANT_ENDPOINTS)
+def test_unknown_or_expired_logins_cannot_use_gill(client, fake_gemini, method, path, body):
+    headers = signup(client)
+    token = headers["Authorization"].removeprefix("Bearer ")
+    bogus = {"Authorization": "Bearer not-a-real-token"}
+    with get_conn() as conn:
+        conn.execute("UPDATE sessions SET expires_at = '2000-01-01T00:00:00+00:00' WHERE token = ?", (token,))
+
+    for credentials in (bogus, headers):
+        response = client.request(method.upper(), path, json=body, headers=credentials)
+        assert response.status_code == 401, (path, response.status_code)
+    assert fake_gemini.calls == []
+    assert rows("SELECT * FROM assistant_sessions") == []
+
+
+def test_logging_out_ends_access_to_an_open_chat(client, fake_gemini):
+    headers = signup(client)
+    sid = open_chat(client, headers)
+
+    assert client.post("/auth/logout", headers=headers).status_code == 204
+
+    response = client.post(f"/assistant/sessions/{sid}/messages", json={"text": "hi"}, headers=headers)
+    assert response.status_code == 401
+    assert fake_gemini.calls == []
 
 
 # ---------- read-only ----------
@@ -458,9 +490,9 @@ def test_chats_only_answer_to_their_owner(client, fake_gemini):
         ("post", f"/assistant/sessions/{sid}/messages/greeting/speech", None),
         ("delete", f"/assistant/sessions/{sid}", None),
     ]:
-        for headers in (other, {}):
+        for headers, status in ((other, 404), ({}, 401)):
             response = client.request(method.upper(), path, json=body, headers=headers)
-            assert response.status_code == 404, (path, response.status_code)
+            assert response.status_code == status, (path, response.status_code)
     assert fake_gemini.calls == []
 
 

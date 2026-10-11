@@ -10,7 +10,7 @@ This document is everything the frontend needs to render Gill Gates: which endpo
 
 1. **The app works without Gill.** Dashboard, transactions, budgets and goals never depend on the assistant. Closing or never opening Gill changes nothing else.
 2. **The frontend never talks to Gemini or ElevenLabs.** No API keys in the Lovable project, no Supabase edge functions calling them. Everything goes through our backend.
-3. **Use our backend for accounts.** Log in with `POST /auth/login` / `POST /auth/register` and send `Authorization: Bearer <token>` on every request. Don't add Supabase auth for app accounts. Guests (no token) can still chat with Gill.
+3. **Use our backend for accounts.** Log in with `POST /auth/login` / `POST /auth/register` and send `Authorization: Bearer <token>` on every request. Don't add Supabase auth for app accounts. Gill requires a login: every `/assistant/*` call without a valid token returns `401`, so the frontend shows a sign-in prompt instead of the chat for guests.
 4. **Render only what's in this document.** The backend sends structured events. Draw the 8 allowlisted components in section 7 and nothing else. Never render HTML from a message; show message text as plain text (light markdown such as `**bold**` and bullet lists is fine).
 5. **Gill can't save anything.** Cards that save (budget plan, savings goal, expense draft) call our normal app API **only when the student clicks the button**. Never auto-save, never save on Gill's behalf.
 6. **Consent text comes from the backend.** Show the consent card exactly as sent. Don't write your own descriptions of what data is shared.
@@ -229,9 +229,9 @@ export interface ConsentStatus {
 
 ## 4. Endpoints
 
-All paths are relative to `VITE_API_BASE_URL`. "Optional login" means: send the bearer token if the student is logged in, send nothing for guests.
+All paths are relative to `VITE_API_BASE_URL`. "Optional login" means: send the bearer token if the student is logged in, send nothing for guests. The Assistant endpoints are **not** optional-login: they need the token.
 
-### Assistant (optional login)
+### Assistant (login required)
 
 | Method | Path | Body | Returns |
 | --- | --- | --- | --- |
@@ -243,7 +243,7 @@ All paths are relative to `VITE_API_BASE_URL`. "Optional login" means: send the 
 | POST | `/assistant/sessions/{session_id}/messages/{message_id}/speech` | — | `audio/mpeg` bytes |
 | DELETE | `/assistant/sessions/{session_id}` | — | 204 |
 
-A session belongs to whoever created it (a logged-in student or a guest). If the student logs in or out, start a new session.
+A session belongs to the student who created it. A guest gets `401 {"detail": "Not logged in"}` on every call. If the student logs out or in as someone else, start a new session.
 
 ### Privacy settings (login required)
 
@@ -577,7 +577,7 @@ Call `useGillNavigation().openGill(returnTo, initialQuestion?)` from
 `frontend/src/lib/gill-navigation-context.ts` to navigate through
 the bubble transition. Allowed return destinations are `/`, `/accounts`,
 `/spending`, and `/purchases`; other values fall back to `/`. Navigation context
-never contains signed-in financial records. Guest comparison actions may explicitly supply labeled demo figures. Consent and assistant data access rules above
+never contains signed-in financial records. A guest's comparison action carries no figures: they sign in first, then Gill reads them through consent-gated tools. Consent and assistant data access rules above
 still apply when the conversation view is connected.
 
 `GET /transactions` also accepts optional `offset` (default 0, non-negative).

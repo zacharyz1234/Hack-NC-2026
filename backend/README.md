@@ -21,7 +21,7 @@ python -m scripts.seed_demo --offline   # demo student with synthetic bank data,
 python -m scripts.chat_cli              # chat as that student; /consents, /revoke <scope>, /clear, /quit
 ```
 
-Drop `--offline` to pull bank data from the Nessie sandbox instead. Use `python -m scripts.chat_cli --guest` to chat without an account.
+Drop `--offline` to pull bank data from the Nessie sandbox instead. Gill requires a login: every `/assistant/*` route returns 401 without one.
 
 If Gemini says the model is busy, requests automatically fall back to `GEMINI_FALLBACK_MODEL`. You can also set `GEMINI_MODEL` in `.env` to switch models.
 

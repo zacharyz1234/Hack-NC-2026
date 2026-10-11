@@ -3,7 +3,6 @@
 Start the server first (uvicorn app.main:app --reload), then from backend/:
     python -m scripts.chat_cli                      # logs in as the seed_demo student
     python -m scripts.chat_cli --email you@unc.edu --password ...
-    python -m scripts.chat_cli --guest
 
 Commands while chatting: /consents  /revoke <scope>  /clear  /quit
 """
@@ -163,15 +162,13 @@ def main() -> None:
     parser.add_argument("--base-url", default="http://localhost:8000")
     parser.add_argument("--email", default="demo@unc.edu")
     parser.add_argument("--password", default=DEMO_PASSWORD)
-    parser.add_argument("--guest", action="store_true")
     args = parser.parse_args()
 
     with httpx.Client(base_url=args.base_url, timeout=120) as api:
-        if not args.guest:
-            login = api.post("/auth/login", json={"email": args.email, "password": args.password})
-            if login.is_error:
-                raise SystemExit(f"Login failed ({login.status_code}). Run python -m scripts.seed_demo first?")
-            api.headers["Authorization"] = f"Bearer {login.json()['token']}"
+        login = api.post("/auth/login", json={"email": args.email, "password": args.password})
+        if login.is_error:
+            raise SystemExit(f"Login failed ({login.status_code}). Run python -m scripts.seed_demo first?")
+        api.headers["Authorization"] = f"Bearer {login.json()['token']}"
         chat = Chat(api)
         chat.start()
         while True:

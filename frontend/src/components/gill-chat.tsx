@@ -46,17 +46,13 @@ let keySeq = 0;
 const nextKey = () => `item-${++keySeq}`;
 
 export function GillChat({
-  userId,
   onClose,
-  onSignIn,
   onDataChanged,
   initialQuestion = "",
   muted,
   onMute,
 }: {
-  userId: number | null;
   onClose: () => void;
-  onSignIn: () => void;
   onDataChanged: () => void;
   initialQuestion?: string;
   muted: boolean;
@@ -265,8 +261,7 @@ export function GillChat({
   }
 
   function saved(target: SaveTarget) {
-    // A guest's save only lives in the demo ledger, which a reload would reset.
-    if (userId) onDataChanged();
+    onDataChanged();
     if (sessionId)
       api(`/assistant/sessions/${sessionId}/events`, "POST", {
         type: "user_saved",
@@ -467,11 +462,6 @@ export function GillChat({
       <div className="gill-room-chat">
         <div className="gill-room-chat-heading">
           <strong>Conversation</strong>
-          {!userId && (
-            <Button variant="link" size="xs" onClick={onSignIn}>
-              Sign in
-            </Button>
-          )}
         </div>
         <Conversation className="chat-transcript">
           <ConversationContent className="p-1 gap-3">

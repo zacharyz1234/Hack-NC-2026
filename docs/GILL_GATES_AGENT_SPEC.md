@@ -269,7 +269,7 @@ Backend tests covering these criteria: `GILL_GATES_DESIGN.md` §10 (`cd backend 
 ## 11. Decisions
 
 **Settled** (details in `GILL_GATES_DESIGN.md`):
-- Framework: FastAPI. Accounts: the existing bearer-token auth, with guests allowed. Bank connections: Capital One Nessie sandbox only, no real banks.
+- Framework: FastAPI. Accounts: the existing bearer-token auth. Gill requires a login; the rest of the app still works for guests. Bank connections: Capital One Nessie sandbox only, no real banks.
 - Consent: Allow once / Allow for this chat / Always allow / No thanks. Grants are stored in `assistant_consents`. Turning access off revokes grants and clears chats that used the data.
 - Chat history: kept server-side only while a chat is active; deleted after 24h idle or on "clear chat".
 - Voice: off by default; a toggle in settings plus a speaker button per message.

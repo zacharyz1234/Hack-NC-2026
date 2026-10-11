@@ -421,26 +421,21 @@ export function PeerBudgetComparison({
             variant="aero"
             onClick={() => {
               if (currentContext.current !== resultContext) return;
-              const question = `Compare my budget with fictional peer ${selected} for ${month}, with ${housingOptions[criteria?.housing ?? housing]} housing. Explain the largest differences and optional adjustments with tradeoffs. `;
+              // Gill needs a login. A guest is asked to sign in first, then this question is sent,
+              // so it never carries ledger figures: Gill reads them only through consent-gated tools.
               openGill(
                 "/spending",
-                user
-                  ? question +
-                      "Use get_peer_budget_comparison and request the existing permissions."
-                  : question +
-                      `Use get_demo_peer_budget_comparison with this explicitly supplied Local demo ledger summary: ${JSON.stringify(demo)}. These figures are demo data, not my personal finances.`,
+                `Compare my budget with fictional peer ${selected} for ${month}, with ${housingOptions[criteria?.housing ?? housing]} housing. Explain the largest differences and optional adjustments with tradeoffs. Use get_peer_budget_comparison and request the existing permissions.`,
               );
             }}
           >
             Ask Gill to compare
           </Button>
-          {user && (
-            <p className="finance-fine">
-              Gill asks for spending-summary and budget/goals permissions before
-              reading your financial figures. Changes need your review and Save
-              action.
-            </p>
-          )}
+          <p className="finance-fine">
+            {user
+              ? "Gill asks for spending-summary and budget/goals permissions before reading your financial figures. Changes need your review and Save action."
+              : "Sign in to ask Gill about this comparison."}
+          </p>
         </>
       )}
     </XPWindow>

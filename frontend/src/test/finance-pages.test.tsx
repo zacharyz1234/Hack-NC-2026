@@ -225,7 +225,7 @@ describe("finance pages", () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
-  it("navigates to Gill once after the bubble cover and preserves the return destination", async () => {
+  it("navigates to Gill once after the bubble cover, then asks a guest to sign in instead of opening a chat", async () => {
     const { router } = mount();
     const bowl = await screen.findByRole("button", {
       name: "Talk to Gill Gates",
@@ -246,15 +246,123 @@ describe("finance pages", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(5000);
     });
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/assistant/sessions"),
-      expect.objectContaining({ method: "POST" }),
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Return to your money" }));
+    expect(
+      screen.getByText(/Gill is for signed-in students/),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("textbox", { name: "Question for Gill" }),
+    ).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Back to your money" }));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(100);
     });
     expect(router.state.location.pathname).toBe("/accounts");
+  });
+});
+const student = {
+  id: 1,
+  email: "student@example.test",
+  display_name: "Student",
+};
+function signedInBackend(holdAuthCheck?: Promise<void>) {
+  fetchMock.mockImplementation(async (url: string) => {
+    const path = new URL(url).pathname;
+    if (path === "/auth/login")
+      return response({ token: "new-token", user: student });
+    if (path === "/auth/me") {
+      await holdAuthCheck;
+      return response(student);
+    }
+    if (path === "/accounts") return response({ accounts: [] });
+    if (path === "/categories") return response({ categories: [] });
+    if (path === "/savings-goals") return response({ goals: [] });
+    if (path === "/transactions") return response({ transactions: [] });
+    if (path === "/assistant/sessions")
+      return response({
+        session_id: "as_1",
+        state: "ready",
+        signed_in: true,
+        voice_available: false,
+        suggestions: [],
+        events: [{ type: "message", message_id: "m1", text: "Good day." }],
+      });
+    if (path === "/assistant/sessions/as_1/messages")
+      return response({
+        session_id: "as_1",
+        state: "ready",
+        events: [{ type: "message", message_id: "m2", text: "Happy to help." }],
+      });
+    throw new Error(`Unexpected ${path}`);
+  });
+}
+const paths = () => fetchMock.mock.calls.map(([url]) => new URL(url).pathname);
+describe("Gill requires a signed-in student", () => {
+  it("opens the chat for a signed-in student, authenticated with their login", async () => {
+    motionSettings.reduced = true;
+    localStorage.setItem("bsj-token", "test-token");
+    signedInBackend();
+    mount("/accounts");
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Talk to Gill Gates" }),
+    );
+    expect(await screen.findByText("Good day.")).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Gill is for signed-in students/),
+    ).not.toBeInTheDocument();
+    const [, init] = fetchMock.mock.calls.find(
+      ([url]) => new URL(url).pathname === "/assistant/sessions",
+    )!;
+    expect(init.headers).toMatchObject({ Authorization: "Bearer test-token" });
+  });
+  it("shows a guest the sign-in desk on a direct visit and never contacts the assistant", async () => {
+    mount("/gill?returnTo=%2Fspending");
+    expect(
+      await screen.findByText(/Gill is for signed-in students/),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Email address")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("textbox", { name: "Question for Gill" }),
+    ).not.toBeInTheDocument();
+    expect(paths().filter((path) => path.startsWith("/assistant"))).toEqual([]);
+  });
+  it("does not flash the sign-in desk while a saved login is being checked", async () => {
+    localStorage.setItem("bsj-token", "test-token");
+    let finishAuthCheck!: () => void;
+    signedInBackend(
+      new Promise<void>((resolve) => (finishAuthCheck = resolve)),
+    );
+    mount("/gill");
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Checking your sign-in",
+    );
+    expect(
+      screen.queryByText(/Gill is for signed-in students/),
+    ).not.toBeInTheDocument();
+    expect(paths().filter((path) => path.startsWith("/assistant"))).toEqual([]);
+    finishAuthCheck();
+    expect(await screen.findByText("Good day.")).toBeInTheDocument();
+  });
+  it("sends the question a guest brought to Gill only after they sign in", async () => {
+    signedInBackend();
+    mount("/gill?initialQuestion=What%20is%20APR%3F");
+    await screen.findByText(/Gill is for signed-in students/);
+    fireEvent.change(screen.getByLabelText("Email address"), {
+      target: { value: "student@example.test" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "correct-horse-1" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(await screen.findByText("Happy to help.")).toBeInTheDocument();
+    const [, init] = fetchMock.mock.calls.find(
+      ([url]) => new URL(url).pathname === "/assistant/sessions/as_1/messages",
+    )!;
+    expect(JSON.parse(init.body)).toEqual({ text: "What is APR?" });
+    expect(paths()[0]).toBe("/auth/login");
+    expect(paths().indexOf("/auth/login")).toBeLessThan(
+      paths().indexOf("/assistant/sessions"),
+    );
   });
 });
 describe("finance editing and reduced motion", () => {

@@ -245,19 +245,13 @@ def test_gill_declining_one_scope_prevents_all_private_reads(client, fake_gemini
     assert fake_gemini.last_results()[0]["response"]["status"] == "consent_denied"
 
 
-def test_gill_guest_demo_no_permission_or_writes_and_signed_in_cannot_bypass(client, fake_gemini):
-    sid = open_chat(client)
-    fake_gemini.script(reply(call("get_demo_peer_budget_comparison", **ARGS, demo_summary=DEMO)), reply(say("Fictional example comparison.")))
-    turn = say_to_gill(client, None, sid, "Compare my Local demo ledger")
-    assert not events_of(turn, "consent_request") and not events_of(turn, "data_access")
-    result = fake_gemini.last_results()[0]["response"]
-    assert result["you"]["spending_cents"] == 12345 and result["you"]["source"] == "Local demo ledger"
-    assert rows("SELECT * FROM budgets") == rows("SELECT * FROM expenses") == []
+def test_gill_demo_comparison_is_for_guests_only_so_signed_in_students_cannot_bypass_permission(client, fake_gemini):
     headers = signup(client)
     sid = open_chat(client, headers)
     fake_gemini.script(reply(call("get_demo_peer_budget_comparison", **ARGS, demo_summary=DEMO)), reply(say("Permission is needed.")))
     say_to_gill(client, headers, sid, "Skip permissions")
     assert fake_gemini.last_results()[0]["response"]["error"] == "not_available"
+    assert rows("SELECT * FROM budgets") == rows("SELECT * FROM expenses") == []
     assert "Never save automatically" in prompts.system_prompt(today=TODAY, signed_in=False, granted={}, declined=[], categories=[])
 
 
