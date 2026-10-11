@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Globe, Home, Settings, ShieldCheck, Wallet, Wifi } from "lucide-react";
+import { Globe, Settings, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,6 +9,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { AuthPanel } from "@/components/auth-panel";
+import { Taskbar } from "@/components/taskbar";
 import { useFinance } from "@/lib/finance-context";
 import { api, logout, type ConsentStatus } from "@/lib/api";
 import landscape from "@/assets/new-york-aero.jpg";
@@ -17,23 +18,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { user, muted, setMuted, quipsOn, toggleQuips, resetDemo } =
     useFinance();
   const [panel, setPanel] = useState<"settings" | "signin" | null>(null);
-  const [clock, setClock] = useState("");
   const [consents, setConsents] = useState<ConsentStatus[]>([]);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  useEffect(() => {
-    const tick = () =>
-      setClock(
-        new Date().toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-        }),
-      );
-    tick();
-    const timer = setInterval(tick, 60000);
-    return () => clearInterval(timer);
-  }, []);
   useEffect(() => {
     let active = true;
     setMessage("");
@@ -87,23 +75,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main>{children}</main>
-      <footer className="taskbar">
-        <Button asChild className="start-button">
-          <Link to="/">
-            <Home size={21} />
-            Home
-          </Link>
-        </Button>
-        <div className="taskbar-app">
-          <Wallet size={14} />
-          Bowl Street Journal
-        </div>
-        <div className="taskbar-status">
-          <ShieldCheck size={14} />
-          <Wifi size={14} />
-          <span>{clock}</span>
-        </div>
-      </footer>
+      <Taskbar />
       <Dialog
         open={panel !== null}
         onOpenChange={(open) => {

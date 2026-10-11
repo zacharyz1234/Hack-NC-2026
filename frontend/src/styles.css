@@ -284,3 +284,30 @@ input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-ou
 /* Gill in his tie (same art as the chat room). That image faces right, so mirror it to match the swim path. */
 .bowl-control .swimming-gill img.gill-tie-fish{animation-name:gill-fin-tie;transform:translateY(-8%) scale(1.3) scaleX(-1)}
 @keyframes gill-fin-tie{0%,100%{transform:translateY(-8%) scale(1.3) scaleX(-1) rotate(-2deg)}50%{transform:translateY(-8%) scale(1.3) scaleX(-1) rotate(2deg) scaleY(.96)}}
+/* ---------- Taskbar: Quick Launch, ticker, tray ---------- */
+.taskbar-quick{display:flex;align-items:center;gap:2px;height:100%;margin-left:8px;padding:0 6px;border-left:1px solid oklch(1 0 0/.3);border-right:1px solid oklch(0 0 0/.2)}
+.taskbar-quick a,.taskbar-quick button{display:grid;place-items:center;width:28px;height:28px;border:1px solid transparent;border-radius:3px;background:none;color:var(--primary-foreground);cursor:pointer}
+.taskbar-quick a:hover,.taskbar-quick button:hover:not(:disabled){border-color:oklch(1 0 0/.45);background:oklch(1 0 0/.18);box-shadow:inset 0 1px oklch(1 0 0/.35)}
+.taskbar-quick button:disabled{opacity:.45;cursor:default}
+.taskbar-quick svg{filter:drop-shadow(0 1px 1px oklch(.2 .08 250/.6))}
+.ticker{flex:1;min-width:0;height:28px;margin:0 10px;display:flex;align-items:stretch;border-radius:3px;background:linear-gradient(oklch(.2 .06 252),oklch(.27 .08 250));box-shadow:inset 1px 1px 0 oklch(0 0 0/.55),inset -1px -1px 0 oklch(1 0 0/.3);font-family:"Lucida Console","Consolas","Courier New",monospace;font-size:11px;color:oklch(.94 .03 220);overflow:hidden}
+.ticker-badge{display:flex;align-items:center;padding:0 8px;font-weight:700;letter-spacing:.06em;color:oklch(.2 .05 250);background:linear-gradient(oklch(.95 .1 95),oklch(.82 .15 80));border-right:1px solid oklch(0 0 0/.4);font-family:Tahoma,sans-serif;font-size:10px}
+.ticker-window{flex:1;min-width:0;overflow:hidden;display:flex;align-items:center;mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 18px),transparent)}
+.ticker-track{display:flex;width:max-content;animation:ticker-scroll 30s linear infinite}
+.ticker:hover .ticker-track,.ticker:focus-within .ticker-track{animation-play-state:paused}
+.ticker-run{display:flex}
+.ticker-item{display:flex;align-items:center;gap:6px;padding:0 14px;white-space:nowrap;color:inherit;text-decoration:none;border-right:1px dotted oklch(1 0 0/.2)}
+.ticker-item strong{color:oklch(.9 .12 90)}
+a.ticker-item:hover{background:oklch(1 0 0/.1);text-decoration:underline}
+.ticker-up{color:oklch(.85 .19 145)}.ticker-down{color:oklch(.76 .17 25)}
+@keyframes ticker-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.ticker-window{overflow-x:auto;mask-image:none}.ticker-run[aria-hidden="true"]{display:none}}
+.market-light{width:9px;height:9px;border-radius:50%;border:1px solid oklch(0 0 0/.35);box-shadow:inset 0 1px 1px oklch(1 0 0/.6)}
+.market-light[data-state="open"]{background:oklch(.78 .2 145)}
+.market-light[data-state="closed"]{background:oklch(.72 .17 60)}
+.market-light[data-state="sample"],.market-light[data-state="loading"]{background:oklch(.7 .02 250)}
+.ticker-badge[data-sample="true"]{background:linear-gradient(oklch(.88 .02 250),oklch(.72 .03 250))}
+.taskbar .taskbar-status{margin-left:0;flex-shrink:0}
+@media(max-width:900px){.market-label{display:none}}
+@media(max-width:600px){.taskbar-quick{margin-left:4px;padding:0 3px}.taskbar-quick a,.taskbar-quick button{width:26px}.ticker{margin:0 6px}.ticker-badge{display:none}}
+@media(max-width:600px){.taskbar .start-button{padding:0 12px}.start-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.taskbar-status>svg{display:none}}

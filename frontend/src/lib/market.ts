@@ -1,6 +1,9 @@
 import { API_BASE, ApiError } from "./api";
 
 export const MARKET_REFRESH_MS = 60 * 60 * 1000;
+// The taskbar ticker. Includes the stock page's default watchlist, so both share the backend's
+// hourly quote cache: at most 5 Twelve Data credits an hour.
+export const TICKER_SYMBOLS = ["AAPL", "MSFT", "NVDA", "GOOGL", "VOO"];
 
 export type StockInstrument = {
   symbol: string;
