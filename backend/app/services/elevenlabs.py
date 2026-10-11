@@ -9,6 +9,7 @@ BASE_URL = "https://api.elevenlabs.io"
 MAX_CHARS = 1000
 
 _EMOJI = re.compile("[\U0001f000-\U0001faff☀-➿️]")
+_GILL_NAME = re.compile(r"\bGill\b", re.IGNORECASE)
 
 
 class VoiceUnavailable(Exception):
@@ -37,7 +38,17 @@ def text_to_speech(text: str) -> bytes:
             f"{BASE_URL}/v1/text-to-speech/{ELEVENLABS_VOICE_ID}",
             params={"output_format": "mp3_44100_128"},
             headers={"xi-api-key": ELEVENLABS_API_KEY, "Accept": "audio/mpeg"},
-            json={"text": text, "model_id": ELEVENLABS_MODEL_ID},
+            json={
+                # Speech-only spelling cues a hard G; displayed chat keeps "Gill".
+                "text": _GILL_NAME.sub("Ghill", text),
+                "model_id": ELEVENLABS_MODEL_ID,
+                "voice_settings": {
+                    "stability": 1.0,
+                    "similarity_boost": 0.75,
+                    "style": 0.0,
+                    "use_speaker_boost": True,
+                },
+            },
             timeout=30,
         )
     except httpx.HTTPError as exc:

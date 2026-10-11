@@ -106,7 +106,9 @@ export function GillChat({
     return () => {
       recognition.current?.stop();
       source.current?.stop();
-      audio.current?.close();
+      if (audio.current && audio.current.state !== "closed")
+        void audio.current.close();
+      audio.current = null;
     };
     // one chat per mount; the parent remounts us when the signed-in user changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -204,34 +206,53 @@ export function GillChat({
       return;
     try {
       setPlaying(true);
+      // Resume while the Play click still has browser user activation.
+      const context =
+        audio.current && audio.current.state !== "closed"
+          ? audio.current
+          : new AudioContext();
+      audio.current = context;
+      await context.resume();
       const data = await apiAudio(
         `/assistant/sessions/${sessionId}/messages/${last.event.message_id}/speech`,
       );
-      // the team's retro "old broker on a speakerphone" filter chain
-      const context = new AudioContext();
-      audio.current = context;
+      // A restrained desktop-speaker sound; avoid bit crushing, which adds static.
       const decoded = await context.decodeAudioData(data);
       const node = context.createBufferSource();
       node.buffer = decoded;
-      node.playbackRate.value = 0.91;
-      const filter = context.createBiquadFilter();
-      filter.type = "bandpass";
-      filter.frequency.value = 1300;
-      filter.Q.value = 0.5;
-      const wave = context.createWaveShaper();
-      const curve = new Float32Array(65536);
-      for (let i = 0; i < curve.length; i++) {
-        const x = (i * 2) / curve.length - 1;
-        curve[i] = Math.round(x * 20) / 20;
-      }
-      wave.curve = curve;
-      node.connect(filter);
-      filter.connect(wave);
-      wave.connect(context.destination);
+      node.playbackRate.value = 0.94;
+      const highpass = context.createBiquadFilter();
+      highpass.type = "highpass";
+      highpass.frequency.value = 140;
+      highpass.Q.value = 0.7;
+      const lowpass = context.createBiquadFilter();
+      lowpass.type = "lowpass";
+      lowpass.frequency.value = 4800;
+      lowpass.Q.value = 0.7;
+      const compressor = context.createDynamicsCompressor();
+      compressor.threshold.value = -20;
+      compressor.knee.value = 12;
+      compressor.ratio.value = 2;
+      compressor.attack.value = 0.01;
+      compressor.release.value = 0.15;
+      const gain = context.createGain();
+      gain.gain.value = 0.85;
+      node.connect(highpass);
+      highpass.connect(lowpass);
+      lowpass.connect(compressor);
+      compressor.connect(gain);
+      gain.connect(context.destination);
       source.current = node;
       node.onended = () => {
-        setPlaying(false);
-        context.close();
+        if (source.current === node) {
+          source.current = null;
+          setPlaying(false);
+        }
+        node.disconnect();
+        highpass.disconnect();
+        lowpass.disconnect();
+        compressor.disconnect();
+        gain.disconnect();
       };
       node.start();
     } catch (e) {
