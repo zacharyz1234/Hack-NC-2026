@@ -225,3 +225,23 @@ it("closes Gill's mouth during silence and opens it when speech resumes", async 
   speechTime = 4.5;
   await waitFor(() => expect(fish).toHaveClass("gill-mouth-hidden"));
 });
+it("sends a question handed over by a button (like Ask Gill about AAPL) as soon as the chat opens", async () => {
+  vi.mocked(api).mockResolvedValueOnce({ events: [{ type: "message", message_id: "reply", text: "Apple designs phones." }] });
+  render(<GillChat {...props} muted initialQuestion="I'm researching Apple Inc. (AAPL)." />);
+  expect(await screen.findByText("Apple designs phones.")).toBeInTheDocument();
+  expect(api).toHaveBeenCalledWith("/assistant/sessions/chat/messages", "POST", { text: "I'm researching Apple Inc. (AAPL)." });
+  expect(screen.getByText("I'm researching Apple Inc. (AAPL).")).toBeInTheDocument();
+  expect(screen.getByRole("textbox", { name: "Question for Gill" })).toHaveValue("");
+  expect(vi.mocked(api).mock.calls.filter(([path]) => String(path).endsWith("/messages"))).toHaveLength(1);
+});
+it("keeps the auto-sent question visible when the chat mounts twice (React dev mode)", async () => {
+  const { StrictMode } = await import("react");
+  vi.mocked(api)
+    .mockResolvedValueOnce({ session_id: "chat2", voice_available: false, suggestions: [], events: [{ type: "message", message_id: "greeting", text: "Good day." }] })
+    .mockResolvedValueOnce({ events: [{ type: "message", message_id: "reply", text: "Microsoft sells software." }] });
+  render(<StrictMode><GillChat {...props} muted initialQuestion="Tell me about MSFT" /></StrictMode>);
+  expect(await screen.findByText("Microsoft sells software.")).toBeInTheDocument();
+  expect(screen.getByText("Tell me about MSFT")).toBeInTheDocument();
+  const sends = vi.mocked(api).mock.calls.filter(([path]) => String(path).endsWith("/messages"));
+  expect(sends).toEqual([["/assistant/sessions/chat2/messages", "POST", { text: "Tell me about MSFT" }]]);
+});
