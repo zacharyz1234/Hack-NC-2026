@@ -53,8 +53,8 @@ class TwelveData:
         self._lock = asyncio.Lock()
         self._search_lock = asyncio.Lock()
         self._history_lock = asyncio.Lock()
-        self._history: dict[tuple[str, str], tuple[float, dict]] = {}
-        self._history_errors: dict[tuple[str, str], tuple[float, MarketDataError]] = {}
+        self._history: dict[tuple, tuple[float, dict]] = {}
+        self._history_errors: dict[tuple, tuple[float, MarketDataError]] = {}
         self._catalog: dict[str, dict] = {}
         self._catalog_at = 0.0
         self._searches: dict[str, tuple[float, list]] = {}
@@ -146,6 +146,8 @@ class TwelveData:
                     "symbol": symbol, "name": row.get("name") or symbol,
                     "exchange": row.get("exchange", ""), "currency": "USD",
                     "price": price, "change": finite_number(row.get("percent_change")),
+                    "change_amount": finite_number(row.get("change")),
+                    "previous_close": finite_number(row.get("previous_close")),
                     "as_of": int(timestamp), "market_open": row.get("is_market_open") is True,
                     "updated_at": utc_now(),
                 }
@@ -187,10 +189,17 @@ class TwelveData:
                            if self._quote_errors.get(s, (-1,))[0] == cycle and self._quotes.get(s, (-1,))[0] != cycle},
             }
 
-    async def history(self, symbol: str, interval: str) -> dict:
-        key = (symbol, interval)
+    async def history(self, symbol: str, interval: str, start_date: str | None = None,
+                      end_date: str | None = None) -> dict:
+        key = (symbol, interval, start_date, end_date) if start_date else (symbol, interval)
         ttl = 86400 if interval == "1day" else 3600
         async with self._history_lock:
+            # Gill's date comparisons can reuse daily chart history when it covers the range.
+            recent = self._history.get((symbol, "1day")) if start_date and interval == "1day" else None
+            if recent and time.monotonic() - recent[0] < ttl:
+                values = recent[1]["values"]
+                if values and values[0]["datetime"] <= start_date and values[-1]["datetime"] >= end_date:
+                    return recent[1]
             cached = self._history.get(key)
             if cached and time.monotonic() - cached[0] < ttl:
                 return cached[1]
@@ -199,9 +208,11 @@ class TwelveData:
                 raise failed[1]
             try:
                 async with httpx.AsyncClient(timeout=12) as client:
+                    bounds = ({"start_date": start_date, "end_date": end_date}
+                              if start_date else {"outputsize": 370 if interval == "1day" else 100})
                     payload = await self._get(
                         client, "time_series", symbol=symbol, interval=interval,
-                        outputsize=370 if interval == "1day" else 100,
+                        **bounds,
                         country="United States", timezone="America/New_York",
                         order="ASC", prepost="false",
                     )

@@ -14,6 +14,11 @@ export type MessageEvent = {
   type: "message";
   message_id: string;
   text: string;
+  stock_numbers?: {
+    value: number;
+    unit: "price" | "percent";
+    direction: "increased" | "decreased" | "unchanged";
+  }[];
 };
 export type ComponentEvent = {
   type: "component";

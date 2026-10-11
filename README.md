@@ -116,6 +116,14 @@ The page no longer calls `/stocks/top` or scans the US market. That legacy backe
 
 Refreshes and caches are shared within one backend process. Run one API worker for this setup; multiple workers or server instances require a shared cache/refresh worker to avoid multiplying credit usage. Quote polling stops when the market page is closed. Check [Twelve Data's batch credit rules](https://support.twelvedata.com/en/articles/5203360-batch-api-requests) and obtain the [appropriate display rights](https://support.twelvedata.com/en/articles/5332349-commercial-and-personal-usage) for a public site.
 
+## Gill's stock information tools
+
+Gill resolves US company names/tickers (`get_stock_search`), reports the latest available USD quote and daily dollar/percentage change (`get_stock_quote`), and compares explicitly dated daily prices (`get_stock_price_comparison`). These public tools work for guests and signed-in users without reading personal financial data or asking for data-access consent. The API key stays in the backend.
+
+Ask, for example, "What was NVIDIA's price between May 10, 2026 and June 10, 2026?" Gill reports both requested and actual trading dates, both prices, the direction, and server-computed dollar and percentage changes. Missing years prompt clarification. Non-trading dates use the most recent available session within the preceding seven days, with its date disclosed. Future dates and ranges longer than ten years are rejected. Daily prices are split-adjusted and exclude dividends/total return; the current session may be incomplete.
+
+Stock quotes and searches share the webpage's caches. Historical comparisons reuse cached daily chart data when it covers the requested dates; otherwise one bounded daily-history request is cached for 24 hours. Current quotes include their timestamp and hourly cache notice. Missing data or quota errors are reported without invented prices. Gill's prompt and tool descriptions restrict stock answers to facts and explicitly prohibit buy/sell/hold recommendations, allocations, price targets, and predictions.
+
 ## Notes for the team
 
 - **Lovable sync:** `frontend/` is a copy of the Lovable project. Lovable only syncs with the GitHub repo it's connected to, so edits here don't flow back to Lovable automatically (and vice versa). Pick one place to keep editing.

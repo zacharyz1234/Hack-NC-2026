@@ -61,3 +61,28 @@ def test_no_fallback_configured(models, monkeypatch):
     with pytest.raises(gemini.GeminiUnavailable):
         gemini._generate("hi")
     assert fake.tried == ["primary"]
+
+
+def test_invalid_key_returns_safe_actionable_error(monkeypatch, caplog):
+    def fail(**kwargs):
+        raise errors.APIError(400, {"error": {"code": 400, "message": "secret-provider-detail",
+            "details": [{"reason": "API_KEY_INVALID"}]}})
+
+    fake = type("Models", (), {"generate_content": staticmethod(fail)})()
+    monkeypatch.setattr(gemini, "_get_client", lambda: type("Client", (), {"models": fake})())
+    with pytest.raises(gemini.GeminiUnavailable) as caught:
+        gemini._generate("hi")
+    assert caught.value.public_message == "Gill's AI service API key is invalid."
+    assert "secret-provider-detail" not in caplog.text
+
+
+def test_chat_reports_invalid_key_without_exposing_provider_details(client, monkeypatch):
+    def fail(*args):
+        raise gemini.GeminiUnavailable("secret-provider-detail", "Gill's AI service API key is invalid.")
+
+    monkeypatch.setattr(gemini, "chat_step", fail)
+    session = client.post("/assistant/sessions").json()["session_id"]
+    response = client.post(f"/assistant/sessions/{session}/messages", json={"text": "Hello"})
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Gill's AI service API key is invalid."
+    assert "secret-provider-detail" not in response.text

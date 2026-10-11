@@ -18,7 +18,7 @@ from collections.abc import Iterable
 from google.genai import types
 from pydantic import ValidationError
 
-from app.assistant import audit, consent, periods, prompts, sessions, tools
+from app.assistant import audit, consent, periods, prompts, sessions, stock_formatting, tools
 from app.assistant.scopes import CONSENT_FOOTER, CONSENT_OPTIONS, SCOPES, SHARED_WITH, WINDOWED
 from app.assistant.sessions import Session
 from app.services import elevenlabs, gemini
@@ -193,7 +193,11 @@ def _run(session: Session, events: list[dict]) -> dict:
         entry = _append(session, "model", reply)
         text = _text(reply)
         if text:
-            events.append({"type": "message", "message_id": entry["id"], "text": text})
+            message = {"type": "message", "message_id": entry["id"], "text": text}
+            stock_numbers = stock_formatting.numbers_for_turn(session.transcript)
+            if stock_numbers:
+                message["stock_numbers"] = stock_numbers
+            events.append(message)
         function_calls = [part.function_call for part in reply.parts or [] if part.function_call]
         if not function_calls:
             return _finish(session, "ready", events)
