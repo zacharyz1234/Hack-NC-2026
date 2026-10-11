@@ -580,3 +580,14 @@ The response shape and default 200-row limit are unchanged. The finance provider
 reads successive pages until a short page is returned, and displays totals only
 after all pages load successfully. Signed-in balances remain bank snapshots;
 manual transaction edits update the ledger, not the bank account balance.
+
+### Aligned voice playback
+
+`POST /assistant/sessions/{session_id}/messages/{message_id}/speech-aligned`
+uses the same session ownership and Gill-message checks as `/speech`. It returns
+`{ audio_base64, alignment }`, where alignment contains `characters`,
+`character_start_times_seconds`, and `character_end_times_seconds`. The audio and
+normalized timestamps come from one ElevenLabs synthesis request. The browser
+uses vowel-group cues as approximate syllable openings, synchronized to the
+AudioContext clock and adjusted for playback rate. `/speech` still returns MP3
+for existing clients. Missing alignment returns 503 rather than fabricated timing.

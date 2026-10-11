@@ -97,6 +97,18 @@ def speech(session_id: str, message_id: str, user: dict | None = Depends(get_opt
     return Response(content=audio, media_type="audio/mpeg")
 
 
+@router.post("/sessions/{session_id}/messages/{message_id}/speech-aligned")
+def speech_aligned(session_id: str, message_id: str, user: dict | None = Depends(get_optional_user)):
+    """Return audio and character timestamps for one of Gill's own replies."""
+    text = orchestrator.message_text(_load(session_id, user), message_id)
+    if text is None:
+        raise HTTPException(status_code=404, detail="Message not found")
+    try:
+        return elevenlabs.text_to_speech_aligned(elevenlabs.speakable(text))
+    except elevenlabs.VoiceUnavailable:
+        raise HTTPException(status_code=503, detail="Gill's voice isn't available right now.") from None
+
+
 @router.delete("/sessions/{session_id}", status_code=204)
 def delete_session(session_id: str, user: dict | None = Depends(get_optional_user)):
     if not sessions.delete(session_id, _user_id(user)):

@@ -29,15 +29,15 @@ def speakable(text: str) -> str:
     return " ".join(text.split())[:MAX_CHARS]
 
 
-def text_to_speech(text: str) -> bytes:
-    """MP3 audio of `text` in Gill's voice."""
+def _request_speech(text: str, aligned: bool = False) -> httpx.Response:
+    """Generate speech, optionally with provider character timestamps."""
     if not is_configured():
         raise VoiceUnavailable("ElevenLabs isn't configured")
     try:
         response = httpx.post(
-            f"{BASE_URL}/v1/text-to-speech/{ELEVENLABS_VOICE_ID}",
+            f"{BASE_URL}/v1/text-to-speech/{ELEVENLABS_VOICE_ID}" + ("/with-timestamps" if aligned else ""),
             params={"output_format": "mp3_44100_128"},
-            headers={"xi-api-key": ELEVENLABS_API_KEY, "Accept": "audio/mpeg"},
+            headers={"xi-api-key": ELEVENLABS_API_KEY, "Accept": "application/json" if aligned else "audio/mpeg"},
             json={
                 # Speech-only spelling cues a hard G; displayed chat keeps "Gill".
                 "text": _GILL_NAME.sub("Ghill", text),
@@ -55,4 +55,20 @@ def text_to_speech(text: str) -> bytes:
         raise VoiceUnavailable(str(exc)) from exc
     if response.is_error:
         raise VoiceUnavailable(f"ElevenLabs returned {response.status_code}")
-    return response.content
+    return response
+
+
+def text_to_speech(text: str) -> bytes:
+    return _request_speech(text).content
+
+
+def text_to_speech_aligned(text: str) -> dict:
+    """Audio and matching character timestamps from the same synthesis request."""
+    try:
+        payload = _request_speech(text, aligned=True).json()
+        alignment = payload.get("normalized_alignment") or payload.get("alignment")
+        if not payload.get("audio_base64") or not isinstance(alignment, dict):
+            raise ValueError("Missing speech alignment")
+        return {"audio_base64": payload["audio_base64"], "alignment": alignment}
+    except (ValueError, TypeError, KeyError) as exc:
+        raise VoiceUnavailable("ElevenLabs returned invalid speech alignment") from exc

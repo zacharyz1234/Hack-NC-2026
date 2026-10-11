@@ -20,7 +20,7 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Mic, Volume2, VolumeX, Square, Send } from "lucide-react";
-import { api, apiAudio, ApiError } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import type {
   ConsentChoice,
   GillEvent,
@@ -28,6 +28,12 @@ import type {
   SessionCreated,
   Turn,
 } from "@/lib/gill-protocol";
+import {
+  mouthCues,
+  decodeSpeechAudio,
+  type AlignedSpeech,
+  type MouthCue,
+} from "@/lib/gill-speech";
 import chatRoom from "@/assets/gill-chat-room.png";
 import mouthClosed from "@/assets/gill-mouth-closed.png";
 import mouthOpen from "@/assets/gill-mouth-open.png";
@@ -69,6 +75,12 @@ export function GillChat({
   const [mouthMoving, setMouthMoving] = useState(false);
   const audio = useRef<AudioContext | null>(null);
   const source = useRef<AudioBufferSourceNode | null>(null);
+  const speechTiming = useRef<{
+    context: AudioContext;
+    startedAt: number;
+    rate: number;
+    cues: MouthCue[];
+  } | null>(null);
   const speechRequest = useRef(0);
   const speakerMuted = useRef(muted);
   speakerMuted.current = muted;
@@ -136,11 +148,26 @@ export function GillChat({
       setMouthMoving(false);
       return;
     }
-    const timer = window.setInterval(
-      () => setMouthMoving((open) => !open),
-      160,
-    );
-    return () => window.clearInterval(timer);
+    const timing = speechTiming.current;
+    if (!timing) return;
+    let frame = 0;
+    let index = 0;
+    let open = false;
+    const followSpeech = () => {
+      const elapsed =
+        (timing.context.currentTime - timing.startedAt) * timing.rate;
+      while (index < timing.cues.length && timing.cues[index]!.end <= elapsed)
+        index++;
+      const cue = timing.cues[index];
+      const nextOpen = !!cue && elapsed >= cue.start && elapsed < cue.end;
+      if (nextOpen !== open) {
+        open = nextOpen;
+        setMouthMoving(open);
+      }
+      frame = window.requestAnimationFrame(followSpeech);
+    };
+    frame = window.requestAnimationFrame(followSpeech);
+    return () => window.cancelAnimationFrame(frame);
   }, [speaking]);
 
   // Every call returns a turn: append its events. A 404 means the chat expired.
@@ -239,12 +266,15 @@ export function GillChat({
           : new AudioContext();
       audio.current = context;
       await context.resume();
-      const data = await apiAudio(
-        `/assistant/sessions/${chatSessionId}/messages/${messageId}/speech`,
+      const speech = await api<AlignedSpeech>(
+        `/assistant/sessions/${chatSessionId}/messages/${messageId}/speech-aligned`,
+        "POST",
       );
       if (requestId !== speechRequest.current || speakerMuted.current) return;
       // A restrained desktop-speaker sound; avoid bit crushing, which adds static.
-      const decoded = await context.decodeAudioData(data);
+      const decoded = await context.decodeAudioData(
+        decodeSpeechAudio(speech.audio_base64),
+      );
       if (requestId !== speechRequest.current || speakerMuted.current) return;
       const node = context.createBufferSource();
       node.buffer = decoded;
@@ -265,6 +295,7 @@ export function GillChat({
       compressor.release.value = 0.15;
       const gain = context.createGain();
       gain.gain.value = 0.85;
+      const cues = mouthCues(speech.alignment);
       node.connect(highpass);
       highpass.connect(lowpass);
       lowpass.connect(compressor);
@@ -274,6 +305,7 @@ export function GillChat({
       node.onended = () => {
         if (source.current === node) {
           source.current = null;
+          speechTiming.current = null;
           if (mounted.current) setSpeaking(false);
         }
         node.disconnect();
@@ -281,6 +313,12 @@ export function GillChat({
         lowpass.disconnect();
         compressor.disconnect();
         gain.disconnect();
+      };
+      speechTiming.current = {
+        context,
+        startedAt: context.currentTime,
+        rate: node.playbackRate.value,
+        cues,
       };
       node.start();
       setSpeaking(true);
