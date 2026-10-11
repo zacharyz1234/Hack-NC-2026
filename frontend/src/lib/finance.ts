@@ -4,7 +4,7 @@ export type Transaction = {
   category: string;
   amount: number;
   date: string;
-  account: "checking" | "savings";
+  account: "checking" | "savings" | "unassigned" | "other";
   // set for signed-in students (data from the backend); absent in the guest demo ledger
   categoryId?: number | null;
   accountId?: number | null;
@@ -76,11 +76,16 @@ export const demoTransactions: Transaction[] = [
   },
 ];
 export const openingBalances = { checking: 2604.74, savings: 3000 };
-export function balance(transactions: Transaction[], account: "checking" | "savings") {
+export function balance(
+  transactions: Transaction[],
+  account: "checking" | "savings",
+) {
   return (
     Math.round(
       (openingBalances[account] +
-        transactions.filter((t) => t.account === account).reduce((a, t) => a + t.amount, 0)) *
+        transactions
+          .filter((t) => t.account === account)
+          .reduce((a, t) => a + t.amount, 0)) *
         100,
     ) / 100
   );
@@ -95,7 +100,10 @@ export function spending(transactions: Transaction[]) {
   );
 }
 export function money(n: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(n);
 }
 export const categories = [
   "Food & Drink",
