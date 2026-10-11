@@ -8,24 +8,60 @@ A student budgeting app with **Gill Gates**, a goldfish AI assistant that can on
 
 ## Run it locally
 
-You need **Python 3.11+** and **Node 20+**. Use two terminals.
+You need **Python 3.11+** and **Node 20+**. Follow the complete set of instructions for your operating system. Start the backend and frontend in separate terminals, leaving both running.
 
-### 1. Backend (http://localhost:8000)
+### Windows (PowerShell)
+
+From the repository root, set up and start the backend in terminal 1:
+
+```powershell
+cd backend
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+Copy-Item .env.example .env
+# Edit .env and fill in GEMINI_API_KEY (and ELEVENLABS_API_KEY / NESSIE_API_KEY if you have them)
+.\.venv\Scripts\python.exe -m scripts.seed_demo --offline  # optional: add demo student and sample bank data
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+```
+
+If `py` isn't available, use `python` in its place. Keep this terminal running; the backend is at http://localhost:8000 and its interactive API docs are at http://localhost:8000/docs. Run uvicorn through `.venv\Scripts\python.exe -m uvicorn` so it uses the installed dependencies.
+
+In terminal 2, from the repository root, start the frontend:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Open http://localhost:8080. The frontend calls the backend at `http://localhost:8000`. To use a different backend (such as a teammate's machine or a tunnel), copy `frontend/.env.example` to `frontend/.env` and set `VITE_API_BASE_URL`.
+
+To run tests, from the repository root:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m pytest  # offline (Gemini/ElevenLabs/Nessie are faked)
+cd ..\frontend
+npm test
+```
+
+### macOS / Linux (Bash)
+
+From the repository root, set up and start the backend in terminal 1:
 
 ```bash
 cd backend
 python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-cp .env.example .env          # then fill in GEMINI_API_KEY (and ELEVENLABS_API_KEY / NESSIE_API_KEY if you have them)
-.venv/bin/python -m scripts.seed_demo --offline   # optional: demo student with sample bank data, a budget and a goal
+.venv/bin/python -m pip install -r requirements.txt
+cp .env.example .env
+# Edit .env and fill in GEMINI_API_KEY (and ELEVENLABS_API_KEY / NESSIE_API_KEY if you have them)
+.venv/bin/python -m scripts.seed_demo --offline  # optional: add demo student and sample bank data
 .venv/bin/python -m uvicorn app.main:app --reload
 ```
 
-Run uvicorn through `.venv/bin/python -m uvicorn`. A plain `uvicorn` can pick up a different Python and fail with `No module named 'google'`.
+Keep this terminal running; the backend is at http://localhost:8000 and its interactive API docs are at http://localhost:8000/docs. Run uvicorn through `.venv/bin/python -m uvicorn` so it uses the installed dependencies.
 
-Interactive API docs: http://localhost:8000/docs
-
-### 2. Frontend (http://localhost:8080)
+In terminal 2, from the repository root, start the frontend:
 
 ```bash
 cd frontend
@@ -33,21 +69,21 @@ npm install
 npm run dev
 ```
 
-The frontend calls the backend at `http://localhost:8000`. To point it somewhere else (a teammate's machine, a tunnel), copy `frontend/.env.example` to `frontend/.env` and set `VITE_API_BASE_URL`.
+Open http://localhost:8080. The frontend calls the backend at `http://localhost:8000`. To use a different backend (such as a teammate's machine or a tunnel), copy `frontend/.env.example` to `frontend/.env` and set `VITE_API_BASE_URL`.
 
-### 3. Try it
+To run tests, from the repository root:
+
+```bash
+cd backend && .venv/bin/python -m pytest  # offline (Gemini/ElevenLabs/Nessie are faked)
+cd ../frontend && npm test
+```
+
+### Try it
 
 - **As a guest:** the dashboard shows the built-in demo ledger, and Gill chats without reading any data.
 - **Signed in:** click **Sign in** and use the demo student from step 1. The email and password are in `backend/scripts/seed_demo.py`. Or create your own account and click **Connect demo bank** to get a Nessie sandbox bank (needs `NESSIE_API_KEY`).
 - Ask Gill **"Where could I cut spending?"**. A permission card appears; allow it and Gill answers from your real totals.
 - **My account** → **What Gill may read** lists each permission and lets you turn it off.
-
-### Tests
-
-```bash
-cd backend && .venv/bin/python -m pytest       # 73 tests, offline (Gemini/ElevenLabs/Nessie are faked)
-cd frontend && npm test
-```
 
 ## What talks to what
 
