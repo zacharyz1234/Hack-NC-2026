@@ -281,3 +281,6 @@
 /* No up/down arrows on number boxes anywhere: amounts are typed, not nudged a cent at a time. */
 input[type="number"]{-moz-appearance:textfield;appearance:textfield}
 input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+/* Gill in his tie (same art as the chat room). That image faces right, so mirror it to match the swim path. */
+.bowl-control .swimming-gill img.gill-tie-fish{animation-name:gill-fin-tie;transform:translateY(-8%) scale(1.3) scaleX(-1)}
+@keyframes gill-fin-tie{0%,100%{transform:translateY(-8%) scale(1.3) scaleX(-1) rotate(-2deg)}50%{transform:translateY(-8%) scale(1.3) scaleX(-1) rotate(2deg) scaleY(.96)}}

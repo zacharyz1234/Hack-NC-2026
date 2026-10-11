@@ -8,7 +8,7 @@ import {
   type ReturnDestination,
 } from "@/lib/gill-navigation-context";
 import emptyBowl from "@/assets/gill-computer-bowl.png";
-import gillFish from "@/assets/gill-fuller-fish.png";
+import gillFish from "@/assets/gill-mouth-closed.png";
 
 export function GillCompanion({
   returnTo,
@@ -44,10 +44,11 @@ export function GillCompanion({
         />
         <span className="swimming-gill">
           <img
+            className="gill-tie-fish"
             src={gillFish}
-            width={1024}
-            height={1024}
-            alt="Gill Gates swimming"
+            width={509}
+            height={441}
+            alt="Gill Gates, a goldfish wearing a tie, swimming"
           />
         </span>
         <span className="bowl-bubble" />
