@@ -17,7 +17,7 @@ DB_PATH = os.getenv("DB_PATH", "app.db")
 # Frontend origins allowed by CORS: local dev servers plus Lovable previews/deploys
 CORS_ORIGIN_REGEX = os.getenv(
     "CORS_ORIGIN_REGEX",
-    r"http://localhost:\d+|https://[a-z0-9-]+\.lovable\.app|https://[a-z0-9-]+\.lovableproject\.com",
+    r"http://(localhost|127\.0\.0\.1):\d+|https://[a-z0-9-]+\.lovable\.app|https://[a-z0-9-]+\.lovableproject\.com",
 )
 
 # Gill Gates chats (and their "this chat" consents) are deleted after this much inactivity

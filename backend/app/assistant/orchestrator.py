@@ -11,6 +11,7 @@ Everything the frontend shows comes back as a list of events; see
 docs/GILL_GATES_FRONTEND_CONTRACT.md for their exact shape.
 """
 import logging
+import re
 import secrets
 from collections.abc import Iterable
 
@@ -428,7 +429,14 @@ def _finish(session: Session, state: str, events: list[dict]) -> dict:
 
 
 def _text(content: types.Content) -> str:
-    return "".join(part.text for part in content.parts or [] if part.text and not part.thought).strip()
+    text = "".join(part.text for part in content.parts or [] if part.text and not part.thought)
+    return _strip_em_dashes(text).strip()
+
+
+def _strip_em_dashes(text: str) -> str:
+    """Gill never speaks in em dashes. The prompt says so; this guarantees it for chat and text-to-speech."""
+    text = re.sub(r"^\s*—\s*|\s*—\s*$", "", text)  # a dash at either end just goes away
+    return re.sub(r"\s*—\s*", ", ", text)
 
 
 def _denied(scopes: list[str]) -> dict:

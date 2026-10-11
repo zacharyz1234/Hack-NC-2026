@@ -178,6 +178,29 @@ def test_gemini_schemas_use_only_plain_keywords():
     assert TOOLS["get_account_balances"].declaration().parameters_json_schema is None
 
 
+def test_gill_background_facts(client):
+    spec = TOOLS["get_gill_background"]
+    assert spec.kind == "data" and spec.scopes(spec.args.model_validate({})) == []
+
+    everything = run(client, "get_gill_background", signed_in=False).result
+    assert everything["topic"] == "all" and everything["status"] == "ok"
+    text = " ".join(everything["facts"])
+    for lore in ("thirty years", "Jordan Bellfish", "tie", "fish", "human"):
+        assert lore in text
+    assert "—" not in text
+
+    style = run(client, "get_gill_background", topic="style").result
+    assert len(style["facts"]) == 1 and "tie" in style["facts"][0]
+
+
+def test_gill_background_rejects_bad_input():
+    spec = TOOLS["get_gill_background"]
+    with pytest.raises(ValidationError):
+        spec.args.model_validate({"topic": "bank_passwords"})
+    with pytest.raises(ValidationError):
+        spec.args.model_validate({"topic": "all", "user_id": 7})
+
+
 def test_periods():
     on = date(2026, 1, 15)
     last_month = periods.resolve("last_month", on)

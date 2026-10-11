@@ -29,6 +29,7 @@ from tests.conftest import (
 )
 
 QUESTION = "Where could I cut spending?"
+NO_STUDENT_DATA = {"get_gill_background"}  # get_* tools that read nothing of the student's, so need no consent
 
 
 def _summary_turn(client, fake_gemini, headers, sid, *, period="last_30_days"):
@@ -358,7 +359,7 @@ def test_tools_are_read_only_by_name():
         assert re.fullmatch(r"(get|show)_[a-z_]+", name)
         assert not re.search(r"save|update|delete|create|transfer|remove|write|edit|add_|set_", name)
         assert (spec.kind == "data") == name.startswith("get_")
-        if spec.kind == "data":
+        if spec.kind == "data" and name not in NO_STUDENT_DATA:
             assert spec.scopes(spec.args.model_validate({})), f"{name} must need consent"
 
 
@@ -506,6 +507,42 @@ def test_speech_only_reads_gills_own_messages(client, fake_gemini, monkeypatch):
     assert spoken == ["Nice! You're on track"]
     assert client.post(f"/assistant/sessions/{sid}/messages/m1/speech", headers=headers).status_code == 404  # student's turn
     assert client.post(f"/assistant/sessions/{sid}/messages/nope/speech", headers=headers).status_code == 404
+
+
+# ---------- Gill's personality ----------
+
+
+def test_backstory_tool_needs_no_consent(client, fake_gemini):
+    headers = signup(client)
+    sid = open_chat(client, headers)
+    fake_gemini.script(
+        reply(say("One moment."), call("get_gill_background", topic="best_friend")),
+        reply(say("Jordan Bellfish is my oldest friend.")),
+    )
+
+    turn = say_to_gill(client, headers, sid, "Who is your best friend?")
+
+    assert turn["state"] == "ready"
+    assert [e["type"] for e in turn["events"]] == ["message", "message"]  # no consent card, no data_access chip
+    result = fake_gemini.last_results()[0]["response"]
+    assert result["status"] == "ok" and any("Jordan Bellfish" in fact for fact in result["facts"])
+    assert [r["scopes"] for r in rows("SELECT scope AS scopes FROM assistant_audit_log WHERE event = 'tool_call'")] == [None]
+
+
+def test_gill_never_speaks_in_em_dashes(client, fake_gemini, monkeypatch):
+    monkeypatch.setattr(elevenlabs, "is_configured", lambda: True)
+    spoken = []
+    monkeypatch.setattr(elevenlabs, "text_to_speech", lambda text: spoken.append(text) or b"ID3audio")
+    headers = signup(client)
+    sid = open_chat(client, headers)
+    fake_gemini.script(reply(say("— Thirty years — and a tie — always —")))
+
+    turn = say_to_gill(client, headers, sid, "Tell me about yourself")
+    message = events_of(turn, "message")[0]
+    client.post(f"/assistant/sessions/{sid}/messages/{message['message_id']}/speech", headers=headers)
+
+    assert message["text"] == "Thirty years, and a tie, always"
+    assert spoken == ["Thirty years, and a tie, always"]
 
 
 def test_gemini_outage_returns_503_and_keeps_the_chat(client, monkeypatch):

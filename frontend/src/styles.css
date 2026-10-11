@@ -162,3 +162,8 @@
 .gill-notice{font-size:10px;text-align:center;color:var(--muted-foreground);border-top:1px dashed var(--border);border-bottom:1px dashed var(--border);padding:4px 0}
 .gill-suggestions{display:flex;flex-wrap:wrap;gap:6px}.gill-suggestions button{white-space:normal;height:auto;padding:4px 8px}
 .card-progress span.over{background:var(--destructive)}
+.gill-quip{grid-column:1;grid-row:1;align-self:end;justify-self:center;position:relative;z-index:2;width:min(100%,190px);margin-bottom:30px;padding:9px 11px;border-radius:14px;border:1px solid var(--glass);background:var(--card);color:var(--foreground);box-shadow:var(--window-shadow);font-size:11px;line-height:1.4;text-align:center;pointer-events:none;opacity:0;transform:translateY(6px) scale(.96);transition:opacity .35s ease,transform .35s ease}
+.gill-quip[data-visible="true"]{opacity:1;transform:none}
+.gill-quip p{margin:0}
+.gill-quip::after{content:"";position:absolute;right:22px;bottom:-7px;width:12px;height:12px;background:var(--card);border-right:1px solid var(--glass);border-bottom:1px solid var(--glass);transform:rotate(45deg)}
+@media(max-width:1100px){.gill-quip{font-size:10px;padding:7px 9px;margin-bottom:26px}}

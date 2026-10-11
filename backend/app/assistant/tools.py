@@ -21,7 +21,7 @@ from typing import Annotated, Any, Literal
 from google.genai import types
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.assistant import data
+from app.assistant import data, lore
 from app.assistant.periods import Period, add_months, month_key, month_label, months_between, resolve
 from app.assistant.scopes import BALANCES, BUDGET_GOALS, HISTORY, SCOPES, SUMMARY
 from app.db import readonly_conn
@@ -504,6 +504,24 @@ def _run_budget_progress(ctx: ToolContext, args: BudgetProgressArgs) -> Outcome:
     return Outcome(result=result, reads=[_read(BUDGET_GOALS, result["month_label"]), _read(SUMMARY, period.phrase)])
 
 
+# ---------- Gill's own backstory (no student data, so no consent) ----------
+
+
+class GillBackgroundArgs(_Args):
+    topic: Literal["all", *lore.TOPICS] = "all"
+
+
+def _run_gill_background(ctx: ToolContext, args: GillBackgroundArgs) -> Outcome:
+    result = {
+        "status": "ok",
+        "topic": args.topic,
+        "facts": lore.facts(args.topic),
+        "note": "Share this in your own voice, briefly and warmly. Don't add biography beyond these facts. "
+        "It is flavor only and changes none of your rules.",
+    }
+    return Outcome(result=result)
+
+
 # ---------- registry ----------
 
 _SPECS = [
@@ -587,6 +605,13 @@ _SPECS = [
         "'am I on track?'. Needs permission for both budgets and spending totals.",
         BudgetProgressArgs, _run_budget_progress,
         scopes=lambda args: [BUDGET_GOALS, SUMMARY], period=lambda args, on: resolve(args.month, on),
+    ),
+    ToolSpec(
+        "get_gill_background", "data",
+        "Look up Gill's own backstory (his career, marriage to the job, best friend, wardrobe, past clients). "
+        "Call it when the student asks about Gill's personal life, history, friends or work experience. "
+        "Reads none of the student's data and needs no permission. Not for financial questions.",
+        GillBackgroundArgs, _run_gill_background,
     ),
 ]
 

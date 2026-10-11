@@ -25,6 +25,8 @@ import {
   Volume2,
   VolumeX,
   MessageCircle,
+  MessageCircleOff,
+  Settings as SettingsIcon,
   Lightbulb,
   Wifi,
   Search,
@@ -66,6 +68,8 @@ import {
   type User,
 } from "@/lib/api";
 import { GillSpeaker } from "@/components/gill-speaker";
+import { GillQuipBubble } from "@/components/gill-quip-bubble";
+import { loadQuipsEnabled, saveQuipsEnabled } from "@/lib/gill-quips";
 import landscape from "@/assets/new-york-aero.jpg";
 import bowl from "@/assets/gill-bowl.png";
 import emptyBowl from "@/assets/gill-computer-bowl.png";
@@ -123,6 +127,12 @@ function Index() {
   const [chat, setChat] = useState(false);
   const [question, setQuestion] = useState("");
   const [muted, setMuted] = useState(false);
+  const [quipsOn, setQuipsOn] = useState(true);
+  useEffect(() => setQuipsOn(loadQuipsEnabled()), []); // read after mount so server and client markup match
+  function toggleQuips() {
+    setQuipsOn(!quipsOn);
+    saveQuipsEnabled(!quipsOn);
+  }
   const [user, setUser] = useState<User | null>(null);
   const userId = user?.id ?? null;
   const [goalId, setGoalId] = useState<number | null>(null);
@@ -438,6 +448,12 @@ function Index() {
             <span className="status-dot" />
             Your money. A little clearer.
           </span>
+          {!userId && (
+            <Button variant="soft" size="sm" onClick={() => setModal("Settings")}>
+              <SettingsIcon />
+              Settings
+            </Button>
+          )}
           <Button
             variant="soft"
             size="sm"
@@ -622,6 +638,7 @@ function Index() {
             </Button>
           </aside>
           <aside className="gill-side">
+            <GillQuipBubble enabled={quipsOn} paused={chat} />
             <XPWindow
               title="A peek at the market"
               icon={<TrendingUp size={12} />}
@@ -1149,6 +1166,17 @@ function Index() {
                       <Button variant="soft" onClick={() => setMuted(!muted)}>
                         {muted ? <VolumeX /> : <Volume2 />}
                         {muted ? "Text only" : "Voice enabled"}
+                      </Button>
+                    </div>
+                    <div className="settings-row">
+                      <span>Gill’s chatter bubbles</span>
+                      <Button
+                        variant="soft"
+                        onClick={toggleQuips}
+                        aria-pressed={quipsOn}
+                      >
+                        {quipsOn ? <MessageCircle /> : <MessageCircleOff />}
+                        {quipsOn ? "On" : "Off"}
                       </Button>
                     </div>
                     <div className="settings-row">
