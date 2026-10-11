@@ -375,7 +375,6 @@ export function StockMarket({
             icon={<TrendingUp size={14} />}
             className="mt-5"
           >
-            <span className="badge-demo">SIMULATED • NO REAL MONEY</span>
             <p
               id="practice-portfolio-value-label"
               className="text-sm font-semibold mt-4"

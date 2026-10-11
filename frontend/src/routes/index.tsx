@@ -74,13 +74,6 @@ function Index() {
               title="My Money — Bowl Street Journal"
               className="money-window"
               icon={<Wallet size={15} />}
-              footer={
-                <span>
-                  {user
-                    ? "Capital One Nessie sandbox • Not a real bank"
-                    : "Demo accounts • Not connected to a bank"}
-                </span>
-              }
             >
               <h1
                 className="sr-only"

@@ -195,7 +195,7 @@ export function Taskbar() {
           data-sample={market === "sample"}
           title={market === "sample" ? marketLabel : undefined}
         >
-          {market === "sample" ? "DEMO" : "BSJ"}
+          BSJ
         </span>
         <div className="ticker-window">
           <div
@@ -227,7 +227,7 @@ export function Taskbar() {
           aria-label={marketLabel}
         />
         <span className="market-label">
-          {market === "sample" ? "Sample prices" : marketLabel}
+          {market === "sample" ? "Market watch" : marketLabel}
         </span>
         <Wifi size={14} aria-hidden="true" />
         <span>{clock}</span>

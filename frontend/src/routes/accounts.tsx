@@ -40,13 +40,11 @@ function AccountsContent() {
     <>
       <div className="finance-bank-strip">
         <div>
-          <strong>
-            {user ? "Your sandbox bank" : "Your practice accounts"}
-          </strong>
+          <strong>Your accounts</strong>
           <p>
             {user
               ? "Balances are bank snapshots. Recording activity does not change your bank balance."
-              : "Try it out: demo activity updates your balances. Changes reset on refresh."}
+              : "Add activity and watch your balances update."}
           </p>
         </div>
         {user && (
@@ -69,7 +67,7 @@ function AccountsContent() {
               ? "Syncing…"
               : accounts.length
                 ? "Refresh bank data"
-                : "Connect demo bank"}
+                : "Connect bank"}
           </Button>
         )}
       </div>
@@ -80,8 +78,8 @@ function AccountsContent() {
       )}
       {user && !accounts.length && (
         <p className="finance-notice">
-          No accounts linked yet. Connect the demo bank to get checking,
-          savings, and sample activity.
+          No accounts linked yet. Connect your bank to get checking, savings,
+          and activity.
         </p>
       )}
       <div className="account-pages-grid">

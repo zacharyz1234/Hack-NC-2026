@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import meadow from "@/assets/sunflower-meadow.webp";
 import beeFlowers from "@/assets/sunflower-bee.webp";
+import { FlowerFriends } from "@/components/flower-friends";
 
 // Each script is told in order, one line per click on the bee. Finishing one queues up the next,
 // so repeat visitors get the other story. Both end with a "here's what you can click" tour.
@@ -27,6 +28,7 @@ export function SunflowerMeadow({ leaving = false }: { leaving?: boolean }) {
   const [script, setScript] = useState(0);
   const [line, setLine] = useState<number | null>(null);
   const [poked, setPoked] = useState(false);
+  const [hurt, setHurt] = useState(false);
 
   useEffect(() => {
     if (line === null) return;
@@ -51,14 +53,10 @@ export function SunflowerMeadow({ leaving = false }: { leaving?: boolean }) {
 
   return (
     <div className="sunflowers" data-leaving={leaving || undefined}>
-      <img
-        className="sunflowers-meadow"
-        src={meadow}
-        alt=""
-        width={1100}
-        height={620}
-        loading="lazy"
-      />
+      <div className="sunflowers-meadow" data-hurt={hurt || undefined}>
+        <img src={meadow} alt="" width={1100} height={620} loading="lazy" />
+        <FlowerFriends onHurt={setHurt} />
+      </div>
       <div className="sunflowers-bee">
         <img src={beeFlowers} alt="" width={800} height={600} loading="lazy" />
         {line !== null && (

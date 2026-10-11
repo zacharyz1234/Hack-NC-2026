@@ -114,7 +114,7 @@ describe("Quick Add tab", () => {
 
     expect(
       await within(form).findByText(
-        /Added \$12\.50 · Burrito bowl to your demo ledger/,
+        /Added \$12\.50 · Burrito bowl/,
       ),
     ).toBeInTheDocument();
     expect(within(form).getByLabelText("How much?")).toHaveValue("");

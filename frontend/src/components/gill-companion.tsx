@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { GillQuipBubble } from "@/components/gill-quip-bubble";
-import { GillSpeaker } from "@/components/gill-speaker";
 import { useFinance } from "@/lib/finance-context";
 import {
   useGillNavigation,
@@ -19,7 +18,7 @@ export function GillCompanion({
   compact?: boolean;
   children?: ReactNode;
 }) {
-  const { muted, setMuted, quipsOn } = useFinance();
+  const { quipsOn } = useFinance();
   const { openGill, transitioning } = useGillNavigation();
   return (
     <aside
@@ -65,16 +64,6 @@ export function GillCompanion({
             onClick={() => openGill(returnTo)}
           >
             <span>Chat with Gill</span>
-          </Button>
-          <Button
-            variant="ghost"
-            className="gill-sound-button"
-            size="icon"
-            aria-label={muted ? "Enable Gill’s voice" : "Mute Gill’s voice"}
-            aria-pressed={!muted}
-            onClick={() => setMuted(!muted)}
-          >
-            <GillSpeaker muted={muted} />
           </Button>
         </div>
       )}

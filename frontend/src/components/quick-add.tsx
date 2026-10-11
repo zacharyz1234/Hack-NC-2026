@@ -241,7 +241,6 @@ export function QuickAddForm({
           <>
             <Check size={14} className="inline" /> Added {money(-added.amount)}{" "}
             · {added.merchant}
-            {!user && " to your demo ledger"}
           </>
         )}
       </p>

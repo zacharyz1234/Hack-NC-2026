@@ -115,7 +115,7 @@ describe("Taskbar ticker", () => {
     const ticker = await screen.findByRole("marquee", {
       name: "Market and money ticker",
     });
-    expect(await within(ticker).findByText("DEMO")).toBeInTheDocument();
+    expect(await within(ticker).findByText("BSJ")).toBeInTheDocument();
     expect(
       screen.getByRole("img", { name: "Sample prices (live data offline)" }),
     ).toBeInTheDocument();

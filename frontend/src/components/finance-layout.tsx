@@ -71,9 +71,6 @@ export function FinanceLayout({
       <div className="finance-layout">
         <div className="finance-content">
           <header className="finance-page-heading">
-            <span className="badge-demo">
-              {user ? "SANDBOX BANK" : "DEMO MODE"}
-            </span>
             <h1 tabIndex={-1} ref={focusPageHeading} data-page-heading>
               {title}
             </h1>

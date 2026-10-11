@@ -108,7 +108,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </Button>
               </div>
               <div className="settings-row">
-                <span>{user?.display_name || user?.email || "Guest demo"}</span>
+                <span>{user?.display_name || user?.email || "Guest"}</span>
                 <Button
                   variant="aero"
                   disabled={busy}
@@ -191,10 +191,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                   >
                     Reset demo
                   </Button>
-                  <p className="finance-fine">
-                    Demo numbers are fictional. Edits survive page navigation
-                    and reset on refresh.
-                  </p>
                 </>
               )}
               {message && <p role="status">{message}</p>}

@@ -415,7 +415,7 @@ html[data-dive="surfacing"] .wallpaper{transform-origin:var(--dive-origin,62% 40
 /* Sunflowers: foreground decoration in the bottom corners of the home page. Only the bee takes clicks. */
 .sunflowers{position:fixed;inset:0;z-index:15;pointer-events:none;transition:opacity .3s ease}
 .sunflowers[data-leaving]{opacity:0}
-.sunflowers-meadow{position:absolute;left:-14px;bottom:30px;height:clamp(110px,24vh,230px);width:auto;max-width:48vw;object-fit:contain;object-position:left bottom;filter:drop-shadow(0 4px 6px oklch(.3 .08 140 / .25))}
+.sunflowers-meadow{position:absolute;left:-14px;bottom:30px;width:min(48vw,calc(clamp(110px,24vh,230px)*1.774));aspect-ratio:1100/620;transform-origin:left bottom}.sunflowers-meadow>img{display:block;width:100%;height:100%;filter:drop-shadow(0 4px 6px oklch(.3 .08 140 / .25))}
 .sunflowers-bee{position:absolute;right:-22px;bottom:30px;height:clamp(115px,23vh,240px);aspect-ratio:4/3;max-width:30vw}
 .sunflowers-bee>img{display:block;width:100%;height:100%;object-fit:contain;object-position:right bottom;filter:drop-shadow(0 4px 6px oklch(.3 .08 140 / .25))}
 .bee-button{position:absolute;left:20%;top:26%;width:20%;height:26%;border:0;background:none;border-radius:50%;padding:0;cursor:pointer;pointer-events:auto}
@@ -423,9 +423,9 @@ html[data-dive="surfacing"] .wallpaper{transform-origin:var(--dive-origin,62% 40
 .bee-button:not([data-poked])::after{content:"";position:absolute;inset:10%;border-radius:50%;border:2px solid oklch(.85 .17 92);animation:bee-ping 2.4s ease-out infinite;pointer-events:none}
 .bee-button:hover{background:radial-gradient(circle,oklch(1 0 0 / .22),transparent 70%)}
 @keyframes bee-ping{0%{transform:scale(.7);opacity:.9}80%,100%{transform:scale(1.5);opacity:0}}
-.bee-bubble{position:absolute;right:40px;bottom:90%;width:min(205px,56vw);margin:0;padding:10px 12px;border-radius:14px;border:1px solid var(--glass);background:var(--card);color:var(--foreground);box-shadow:var(--window-shadow);font-size:12px;line-height:1.45;text-align:left;pointer-events:auto;cursor:pointer;animation:bee-pop .3s ease both}
-.bee-bubble small{display:block;margin-top:5px;font-size:10px;color:var(--muted-foreground)}
-.bee-bubble::after{content:"";position:absolute;right:135px;bottom:-7px;width:12px;height:12px;background:var(--card);border-right:1px solid var(--glass);border-bottom:1px solid var(--glass);transform:rotate(45deg)}
+.bee-bubble{position:absolute;right:40px;bottom:90%;width:min(205px,56vw);margin:0;padding:10px 12px;border-radius:14px;border:1px solid oklch(.77 .079 231 / .8);background:var(--bubble-bg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--foreground);box-shadow:var(--window-shadow);font-size:11px;font-weight:400;line-height:1.4;text-align:left;pointer-events:auto;cursor:pointer;animation:bee-pop .3s ease both}@media(max-width:1100px){.bee-bubble{font-size:10px}}
+.bee-bubble small{display:block;margin-top:5px;font-size:9px;color:var(--muted-foreground)}
+.bee-bubble::after{content:"";position:absolute;right:135px;bottom:-7px;width:12px;height:12px;background:var(--bubble-tail);border-right:1px solid oklch(.77 .079 231 / .8);border-bottom:1px solid oklch(.77 .079 231 / .8);transform:rotate(45deg)}
 @keyframes bee-pop{from{opacity:0;transform:translateY(6px) scale(.96)}}
 @media(max-width:600px){.sunflowers-meadow{display:none}.sunflowers-bee{right:auto;left:-6px;height:105px;max-width:none}.sunflowers-bee>img{object-position:left bottom}.bee-bubble{right:auto;left:28%;bottom:70%}.bee-bubble::after{right:auto;left:10%}}
 
@@ -480,3 +480,22 @@ html[data-dive="surfacing"] .wallpaper{transform-origin:var(--dive-origin,62% 40
 .peer-comparison-table th, .peer-comparison-table td { border-bottom: 1px solid var(--border); padding: .7rem; text-align: right; white-space: nowrap; }
 .peer-comparison-table th:first-child { text-align: left; white-space: normal; }
 .peer-comparison-table tfoot { font-weight: 600; }
+/* Windows 7 style glossy nav buttons: a hard highlight splits each button into a light top half and a deeper bottom half. */
+.finance-nav a,.nav-button{position:relative;border:1px solid oklch(.68 .05 240);color:oklch(.3 .06 245);background:linear-gradient(to bottom,oklch(1 0 0 / .95) 0%,oklch(.96 .02 230 / .9) 48%,oklch(.86 .045 232 / .92) 50%,oklch(.93 .035 230 / .95) 100%);box-shadow:inset 0 0 0 1px oklch(1 0 0 / .85),inset 0 -1px 3px oklch(.7 .08 235 / .35),0 1px 3px oklch(.3 .08 245 / .3);text-shadow:0 1px 0 oklch(1 0 0 / .8);transition:box-shadow .2s,background .2s,border-color .2s}
+.finance-nav a:hover,.nav-button:hover{background:linear-gradient(to bottom,oklch(.99 .02 215) 0%,oklch(.93 .06 220) 48%,oklch(.8 .11 225) 50%,oklch(.9 .09 215) 100%);border-color:oklch(.5 .13 245);box-shadow:inset 0 0 0 1px oklch(1 0 0 / .8),0 0 9px oklch(.75 .14 225 / .65),0 1px 3px oklch(.3 .08 245 / .3)}
+.finance-nav a.active,.nav-button.active{background:linear-gradient(to bottom,oklch(.8 .11 228) 0%,oklch(.64 .15 238) 48%,oklch(.48 .17 250) 50%,oklch(.62 .15 236) 100%);border-color:oklch(.33 .12 252);color:#fff;text-shadow:0 -1px 1px oklch(.25 .1 255 / .8);box-shadow:inset 0 0 0 1px oklch(1 0 0 / .45),inset 0 1px 0 oklch(1 0 0 / .6),0 1px 3px oklch(.25 .08 250 / .45)}
+.finance-nav a:active:not(.active){background:linear-gradient(to bottom,oklch(.78 .1 228),oklch(.72 .12 230) 48%,oklch(.62 .14 235) 50%,oklch(.74 .11 228));box-shadow:inset 0 2px 4px oklch(.3 .1 245 / .45)}
+.finance-nav a:focus-visible{outline:2px solid oklch(.75 .14 225);outline-offset:2px}
+.bowl-street-sign-group{pointer-events:auto;cursor:pointer}
+/* Easter egg: the meadow flowers talk. Invisible hover spots, no cursor or hint. */
+.flower-spot{position:absolute;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;pointer-events:auto}
+.flower-bubble{position:absolute;bottom:92%;left:50%;transform:translateX(-50%);width:max-content;max-width:150px;padding:6px 10px;border-radius:12px;border:1px solid oklch(.77 .079 231 / .8);background:var(--bubble-bg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--foreground);box-shadow:var(--window-shadow);font-size:11px;font-weight:400;line-height:1.4;text-align:center;pointer-events:none;animation:bee-pop .25s ease both;z-index:2}@media(max-width:1100px){.flower-bubble{font-size:10px}}
+.flower-bubble::after{content:"";position:absolute;left:calc(50% - 5px);bottom:-6px;width:10px;height:10px;background:var(--bubble-tail);border-right:1px solid oklch(.77 .079 231 / .8);border-bottom:1px solid oklch(.77 .079 231 / .8);transform:rotate(45deg)}
+.flower-bubble[data-align="left"]{left:0;transform:none}.flower-bubble[data-align="left"]::after{left:12px}
+.flower-bubble[data-align="right"]{left:auto;right:0;transform:none}.flower-bubble[data-align="right"]::after{left:auto;right:12px}
+.flower-bubble[data-hurt]{color:oklch(.45 .2 25);border-color:oklch(.75 .12 25)}
+.sunflowers-meadow[data-hurt]{animation:flower-shake .35s ease-in-out}
+@keyframes flower-shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-1.6deg)}40%{transform:rotate(1.6deg)}60%{transform:rotate(-1deg)}80%{transform:rotate(1deg)}}
+
+/* Speech bubbles for the bee and flowers: the My Money window's frosted white-blue glass, fading to ivory at the bottom. */
+:root{--bubble-bg:linear-gradient(to bottom,oklch(1 0 0 / .86),oklch(.96 .035 220 / .84) 50%,oklch(.985 .035 95 / .88));--bubble-tail:oklch(.985 .035 95 / .88)}
