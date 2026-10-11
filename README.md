@@ -130,3 +130,10 @@ Stock quotes and searches share the webpage's caches. Historical comparisons reu
 - **No Supabase / Lovable AI:** sign-in, Gill's chat and Gill's voice all go through `backend/`. The Lovable-generated Supabase auth, its chat-history table, the `/api/chat` route (Lovable AI gateway) and the `/api/voice` route (ElevenLabs called from the frontend server) were removed. If Lovable offers to "reconnect Supabase", say no.
 - **Lockfiles:** the dependency cleanup was done with npm, so `bun.lock` still lists the removed packages. Run `bun install` once if you use bun or Lovable.
 - **Secrets:** API keys live only in `backend/.env`. Never put them in the frontend.
+
+
+## CREDITS
+
+APIS: Google Gemini, Nessie, ElevenLabs, Twelve Data
+LLMS: ChatGPT Codex, Claude Code, Loveable
+ONLINE RESOURCES: frutigeraeroarchive.org, Canva
