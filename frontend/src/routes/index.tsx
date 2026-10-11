@@ -2,13 +2,7 @@ import { useFinance } from "@/lib/finance-context";
 import { focusPageHeading } from "@/lib/page-focus";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState, type CSSProperties } from "react";
-import {
-  Wallet,
-  PieChart,
-  ShoppingBasket,
-  ChevronRight,
-  TrendingUp,
-} from "lucide-react";
+import { Wallet, PieChart, ShoppingBasket, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,6 +15,7 @@ import { BowlStreetDive } from "@/components/bowl-street-dive";
 import { TIMELINES, useBowlStreetDive } from "@/lib/bowl-street-dive";
 import { StockMarket } from "@/components/stock-market";
 import { GillCompanion } from "@/components/gill-companion";
+import plane from "@/assets/plane.webp";
 import { SunflowerMeadow } from "@/components/sunflower-meadow";
 import { useGillNavigation } from "@/lib/gill-navigation-context";
 import { DEMO_MONTH } from "@/components/finance-provider";
@@ -203,24 +198,15 @@ function Index() {
                 </span>
               </div>
             </Button>
+            <img
+              className="city-plane"
+              src={plane}
+              alt=""
+              width={900}
+              height={423}
+              aria-hidden
+            />
           </aside>
-          <XPWindow
-            title="A peek at the market"
-            icon={<TrendingUp size={12} />}
-            className="market-preview market-mini home-market-preview"
-          >
-            {[
-              ["S&P 500", "+0.63%"],
-              ["NASDAQ", "+0.91%"],
-              ["Dow", "+0.47%"],
-            ].map(([name, change]) => (
-              <div className="market-mini-row" key={name}>
-                <strong>{name}</strong>
-                <span className="positive">↗ {change}</span>
-              </div>
-            ))}
-          </XPWindow>
-
           <GillCompanion returnTo="/">
             <div className="gill-tip-wrap">
               <span className="gill-tip-solid" aria-hidden />

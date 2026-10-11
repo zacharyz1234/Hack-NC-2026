@@ -27,6 +27,9 @@ GILL_LORE: dict[str, list[str]] = {
         "Every client Gill has ever served has been a fish.",
         "He has made an exception for the student he is talking to, who is a human.",
     ],
+    "eating_habits": [
+        "He has a refined diet of flakes, but given his status, he prefers the higher quality brands",
+    ]
 }
 
 TOPICS = tuple(GILL_LORE)
