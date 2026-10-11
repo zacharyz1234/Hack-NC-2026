@@ -428,3 +428,35 @@ html[data-dive="surfacing"] .wallpaper{transform-origin:var(--dive-origin,62% 40
 .bee-bubble::after{content:"";position:absolute;right:135px;bottom:-7px;width:12px;height:12px;background:var(--card);border-right:1px solid var(--glass);border-bottom:1px solid var(--glass);transform:rotate(45deg)}
 @keyframes bee-pop{from{opacity:0;transform:translateY(6px) scale(.96)}}
 @media(max-width:600px){.sunflowers-meadow{display:none}.sunflowers-bee{right:auto;left:-6px;height:105px;max-width:none}.sunflowers-bee>img{object-position:left bottom}.bee-bubble{right:auto;left:28%;bottom:70%}.bee-bubble::after{right:auto;left:10%}}
+
+
+/* Bowl Street's roadside sign sits down on the meadow in front of the skyline. */
+.home-grid .city-overlay{inset:0;top:0;bottom:0;padding:0;background:none;pointer-events:none;z-index:1}
+.bowl-street-sign-group{position:absolute;left:0;top:121%;display:block;width:178px;transform:perspective(650px) rotateY(20deg) rotateX(3deg) rotateZ(-1deg) scale(.82);transform-origin:left top;z-index:1;filter:blur(.2px);opacity:.97}
+.bowl-street-sign{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:100%;min-height:59px;padding:7px 12px 4px;color:#fff;font:700 13px/1.16 Arial,Helvetica,sans-serif;letter-spacing:.01em;text-align:center;text-shadow:0 1px 2px #062b56;border:3px solid #d1d5dc;border-radius:9px;background:radial-gradient(ellipse at 48% 62%,#3377f3a8 0%,transparent 61%),linear-gradient(108deg,#ffffff40 0%,transparent 20% 74%,#07199a35 100%),linear-gradient(180deg,#2027f4 0%,#132dde 37%,#0756d2 74%,#093da9 100%);box-shadow:inset 0 1px 0 #ffffffd9,inset 1px 0 0 #ffffff80,inset 0 -2px 0 #061b94b8,0 0 0 1px #627180,0 3px 0 #98a4ac,0 5px 8px #10233750,0 10px 16px #10233755;z-index:1}
+.bowl-street-sign-words{position:relative;z-index:2;display:block;white-space:nowrap}.bowl-street-sign-bolt{position:absolute;z-index:1;width:5px;height:5px;border:1px solid #617987;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0 20%,#aab9c3 38%,#65747e 72%);box-shadow:0 0 1px #fff}.bowl-street-sign-bolt-tl{top:4px;left:5px}.bowl-street-sign-bolt-tr{top:4px;right:5px}.bowl-street-sign-bolt-bl{bottom:4px;left:5px}.bowl-street-sign-bolt-br{bottom:4px;right:5px}
+.bowl-street-sign-arrow{position:relative;z-index:2;display:block;font:900 24px/1 Arial,Helvetica,sans-serif;margin-top:1px;letter-spacing:-.04em;text-shadow:0 1px 1px #052c54}
+.bowl-street-sign-pole{position:absolute;top:53px;width:7px;height:66px;background:linear-gradient(90deg,#35270c 0%,#78602b 24%,#c09b48 48%,#715723 68%,#392a10 100%);box-shadow:1px 2px 4px #10233766;transform:perspective(120px) rotateY(-14deg);z-index:0}
+.bowl-street-sign-pole-left{left:29%}.bowl-street-sign-pole-right{right:21%}
+.city-destination:hover .bowl-street-sign-group{filter:none;opacity:1;transform:perspective(650px) rotateY(20deg) rotateX(3deg) rotateZ(-1deg) scale(.85)}
+@media(max-width:900px){.bowl-street-sign-group{left:-4%;top:109%;transform:perspective(650px) rotateY(16deg) rotateX(3deg) rotateZ(-1deg) scale(.72)}.city-destination:hover .bowl-street-sign-group{transform:perspective(650px) rotateY(16deg) rotateX(3deg) rotateZ(-1deg) scale(.75)}}
+@media(max-width:600px){.bowl-street-sign-group{left:4%;top:100%;transform:perspective(650px) rotateY(10deg) rotateX(2deg) rotateZ(-1deg) scale(.68)}.bowl-street-sign-pole{height:58px}.city-destination:hover .bowl-street-sign-group{transform:perspective(650px) rotateY(10deg) rotateX(2deg) rotateZ(-1deg) scale(.71)}}
+
+
+/* Broadway-style lights signal that the skyline and its Bowl Street sign are interactive. */
+.home-grid .city-overlay{isolation:isolate;overflow:visible}
+.home-grid .city-overlay::before,.home-grid .city-overlay::after{content:"";position:absolute;inset:-16%;z-index:0;pointer-events:none;opacity:0;transition:opacity .32s ease}
+.home-grid .city-overlay::before{background:radial-gradient(ellipse 82% 126% at 53% 108%,#fff7cc99 0%,#ffe79c64 43%,transparent 76%),radial-gradient(ellipse 48% 68% at 35% 101%,#fff1c255 0%,transparent 72%);mask-image:linear-gradient(to bottom,#000 0%,#000 48%,transparent 75%);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 48%,transparent 75%);mix-blend-mode:screen}
+.home-grid .city-overlay::after{background:conic-gradient(from 165deg at 54% 100%,transparent 0deg 31deg,#ffe5a357 35deg 47deg,transparent 51deg 70deg,#fff1c250 74deg 87deg,transparent 91deg);mask-image:linear-gradient(to bottom,#000 0%,#000 50%,transparent 74%);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 50%,transparent 74%);filter:blur(16px);mix-blend-mode:screen}
+.home-grid .city-destination:hover .city-overlay::before,.home-grid .city-destination:hover .city-overlay::after{opacity:1}
+.bowl-street-sign-group{z-index:2}
+.bowl-street-sign-bulb{position:absolute;z-index:3;width:5px;height:5px;border:1px solid #d3bd77;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff4c5 0 12%,#8a713d 45%,#4b3a18 78%);box-shadow:inset 0 0 1px #fff4c5;opacity:.78;transition:background .2s,box-shadow .2s,opacity .2s}
+.bulb-top-1{top:-5px;left:9%}.bulb-top-2{top:-5px;left:22%}.bulb-top-3{top:-5px;left:36%}.bulb-top-4{top:-5px;left:50%}.bulb-top-5{top:-5px;left:64%}.bulb-top-6{top:-5px;left:78%}.bulb-top-7{top:-5px;left:91%}
+.bulb-right-1{top:24%;right:-5px}.bulb-right-2{top:50%;right:-5px}.bulb-right-3{top:76%;right:-5px}
+.bulb-bottom-1{bottom:-5px;left:9%}.bulb-bottom-2{bottom:-5px;left:22%}.bulb-bottom-3{bottom:-5px;left:36%}.bulb-bottom-4{bottom:-5px;left:50%}.bulb-bottom-5{bottom:-5px;left:64%}.bulb-bottom-6{bottom:-5px;left:78%}.bulb-bottom-7{bottom:-5px;left:91%}
+.bulb-left-1{top:24%;left:-5px}.bulb-left-2{top:50%;left:-5px}.bulb-left-3{top:76%;left:-5px}
+.city-destination:hover .bowl-street-sign-bulb{background:radial-gradient(circle at 35% 30%,#fff 0 18%,#fff1a0 38%,#ffc22e 75%);box-shadow:0 0 4px 2px #ffe17a,0 0 11px 4px #ffb82e;opacity:1;animation:marquee-bulb-glow .42s ease-out both}
+.city-destination:hover .bulb-top-2,.city-destination:hover .bulb-top-5,.city-destination:hover .bulb-right-2,.city-destination:hover .bulb-bottom-2,.city-destination:hover .bulb-bottom-5,.city-destination:hover .bulb-left-2{animation-delay:.08s}
+.city-destination:hover .bulb-top-3,.city-destination:hover .bulb-top-6,.city-destination:hover .bulb-right-3,.city-destination:hover .bulb-bottom-3,.city-destination:hover .bulb-bottom-6,.city-destination:hover .bulb-left-3{animation-delay:.16s}
+@keyframes marquee-bulb-glow{from{opacity:.35;filter:brightness(.55)}to{opacity:1;filter:brightness(1.18)}}
+@media(prefers-reduced-motion:reduce){.home-grid .city-overlay::before,.home-grid .city-overlay::after,.bowl-street-sign-bulb{transition:none;animation:none!important}}

@@ -169,7 +169,38 @@ function Index() {
               aria-label="Enter Bowl Street stock market"
             >
               <div className="city-overlay">
-                <strong>Take a trip to Bowl Street</strong>
+                <span className="bowl-street-sign-group" aria-hidden="true">
+                  <span className="bowl-street-sign-pole bowl-street-sign-pole-left" />
+                  <span className="bowl-street-sign-pole bowl-street-sign-pole-right" />
+                  <span className="bowl-street-sign">
+                    <span className="bowl-street-sign-bolt bowl-street-sign-bolt-tl" />
+                    <span className="bowl-street-sign-bolt bowl-street-sign-bolt-tr" />
+                    <span className="bowl-street-sign-bolt bowl-street-sign-bolt-bl" />
+                    <span className="bowl-street-sign-bolt bowl-street-sign-bolt-br" />
+                    <span className="bowl-street-sign-bulb bulb-top-1" />
+                    <span className="bowl-street-sign-bulb bulb-top-2" />
+                    <span className="bowl-street-sign-bulb bulb-top-3" />
+                    <span className="bowl-street-sign-bulb bulb-top-4" />
+                    <span className="bowl-street-sign-bulb bulb-top-5" />
+                    <span className="bowl-street-sign-bulb bulb-top-6" />
+                    <span className="bowl-street-sign-bulb bulb-top-7" />
+                    <span className="bowl-street-sign-bulb bulb-right-1" />
+                    <span className="bowl-street-sign-bulb bulb-right-2" />
+                    <span className="bowl-street-sign-bulb bulb-right-3" />
+                    <span className="bowl-street-sign-bulb bulb-bottom-1" />
+                    <span className="bowl-street-sign-bulb bulb-bottom-2" />
+                    <span className="bowl-street-sign-bulb bulb-bottom-3" />
+                    <span className="bowl-street-sign-bulb bulb-bottom-4" />
+                    <span className="bowl-street-sign-bulb bulb-bottom-5" />
+                    <span className="bowl-street-sign-bulb bulb-bottom-6" />
+                    <span className="bowl-street-sign-bulb bulb-bottom-7" />
+                    <span className="bowl-street-sign-bulb bulb-left-1" />
+                    <span className="bowl-street-sign-bulb bulb-left-2" />
+                    <span className="bowl-street-sign-bulb bulb-left-3" />
+                    <span className="bowl-street-sign-words">Take a Trip to<br />Bowl Street</span>
+                    <span className="bowl-street-sign-arrow">→</span>
+                  </span>
+                </span>
               </div>
             </Button>
           </aside>
