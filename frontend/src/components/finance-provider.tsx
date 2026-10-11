@@ -61,7 +61,7 @@ function useFinanceState() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [bankNotice, setBankNotice] = useState("");
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(true);
   const [quipsOn, setQuipsOn] = useState(true);
   const generation = useRef(0);
   const resetDemo = useCallback(() => {
