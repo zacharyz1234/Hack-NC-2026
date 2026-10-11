@@ -21,6 +21,7 @@ import { BowlStreetDive } from "@/components/bowl-street-dive";
 import { TIMELINES, useBowlStreetDive } from "@/lib/bowl-street-dive";
 import { StockMarket } from "@/components/stock-market";
 import { GillCompanion } from "@/components/gill-companion";
+import { SunflowerMeadow } from "@/components/sunflower-meadow";
 import { useGillNavigation } from "@/lib/gill-navigation-context";
 import { DEMO_MONTH } from "@/components/finance-provider";
 import { FinanceDataBoundary } from "@/components/finance-layout";
@@ -207,6 +208,9 @@ function Index() {
             </div>
           </GillCompanion>
         </div>
+      )}
+      {!stockView && (
+        <SunflowerMeadow leaving={dive.state.home === "leaving"} />
       )}
       <Dialog open={education} onOpenChange={setEducation}>
         <DialogContent className="finance-dialog">

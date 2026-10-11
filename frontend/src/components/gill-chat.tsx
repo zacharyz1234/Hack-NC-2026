@@ -87,11 +87,17 @@ export function GillChat({
   const textarea = useRef<HTMLTextAreaElement | null>(null);
   const recognition = useRef<{ stop: () => void } | null>(null);
   const mounted = useRef(false);
+  const askedInitial = useRef(false);
+  const startRequest = useRef(0);
 
   async function start(notice?: string) {
+    // Only the newest start may set up the chat (dev mode mounts twice), so a late reply from an
+    // older one can't wipe messages already sent, like an auto-sent question.
+    const request = ++startRequest.current;
     setError("");
     try {
       const session = await api<SessionCreated>("/assistant/sessions", "POST");
+      if (request !== startRequest.current) return;
       setSessionId(session.session_id);
       setSuggestions(session.suggestions);
       setVoiceAvailable(session.voice_available);
@@ -112,6 +118,7 @@ export function GillChat({
         })),
       ]);
     } catch (e) {
+      if (request !== startRequest.current) return;
       setError(
         e instanceof Error ? e.message : "Gill's office is closed right now.",
       );
@@ -133,6 +140,16 @@ export function GillChat({
     // one chat per mount; the parent remounts us when the signed-in user changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // A question handed over by a button (e.g. "Ask Gill about AAPL") is sent as soon as the chat
+  // opens. If the chat can't open, it stays in the box to send by hand.
+  useEffect(() => {
+    if (!sessionId || askedInitial.current || !initialQuestion.trim()) return;
+    askedInitial.current = true;
+    send(initialQuestion);
+    // send is recreated every render; this should run once, when the session first exists
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]);
 
   useEffect(() => {
     if (muted) {

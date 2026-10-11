@@ -399,3 +399,32 @@ html[data-dive="surfacing"] .wallpaper{transform-origin:var(--dive-origin,62% 40
 .stock-entrance[data-entering="true"] .stock-view>*{animation:xp-pop 460ms cubic-bezier(.2,.9,.3,1.12) calc(var(--i,0)*55ms) both}
 .stock-view>:nth-child(2){--i:1}.stock-view>:nth-child(3){--i:2}.stock-view>:nth-child(4){--i:3}.stock-view>:nth-child(5){--i:4}.stock-view>:nth-child(6){--i:5}.stock-view>:nth-child(7){--i:6}
 @keyframes xp-pop{from{opacity:0;transform:translateY(26px) scale(.96)}}
+/* Larger, easier-to-read text in Gill's chat room. */
+.gill-room-chat .chat-transcript,.gill-room-chat .chat-transcript [data-slot="message-content"],.gill-room-chat .chat-transcript p{font-size:14px;line-height:1.55}
+.gill-room-chat .gill-suggestions button{font-size:12px}
+.gill-room-chat .gill-card{font-size:12.5px}
+.gill-room-input textarea{font-size:14px}
+.gill-room-chat .gill-chip,.gill-room-chat .gill-notice{font-size:11.5px}
+@media(max-width:600px){.gill-room-chat .chat-transcript,.gill-room-chat .chat-transcript [data-slot="message-content"],.gill-room-chat .chat-transcript p{font-size:13.5px}.gill-room-input textarea{font-size:16px}}
+/* Side-by-side form fields: labels can wrap to different heights, so pin each field's label and
+   input to the bottom of its cell. The inputs always line up, whatever the label length. */
+.form-grid>*{display:flex;flex-direction:column;justify-content:flex-end;gap:6px;min-width:0}
+.form-grid>*>.field-label{margin:0}
+/* In Gill's chat cards, only go two-up when both fields get a usable width; otherwise stack. */
+.gill-card .form-grid{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+/* Sunflowers: foreground decoration in the bottom corners of the home page. Only the bee takes clicks. */
+.sunflowers{position:fixed;inset:0;z-index:15;pointer-events:none;transition:opacity .3s ease}
+.sunflowers[data-leaving]{opacity:0}
+.sunflowers-meadow{position:absolute;left:-14px;bottom:30px;height:clamp(110px,24vh,230px);width:auto;max-width:48vw;object-fit:contain;object-position:left bottom;filter:drop-shadow(0 4px 6px oklch(.3 .08 140 / .25))}
+.sunflowers-bee{position:absolute;right:-22px;bottom:30px;height:clamp(115px,23vh,240px);aspect-ratio:4/3;max-width:30vw}
+.sunflowers-bee>img{display:block;width:100%;height:100%;object-fit:contain;object-position:right bottom;filter:drop-shadow(0 4px 6px oklch(.3 .08 140 / .25))}
+.bee-button{position:absolute;left:20%;top:26%;width:20%;height:26%;border:0;background:none;border-radius:50%;padding:0;cursor:pointer;pointer-events:auto}
+.bee-button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.bee-button:not([data-poked])::after{content:"";position:absolute;inset:10%;border-radius:50%;border:2px solid oklch(.85 .17 92);animation:bee-ping 2.4s ease-out infinite;pointer-events:none}
+.bee-button:hover{background:radial-gradient(circle,oklch(1 0 0 / .22),transparent 70%)}
+@keyframes bee-ping{0%{transform:scale(.7);opacity:.9}80%,100%{transform:scale(1.5);opacity:0}}
+.bee-bubble{position:absolute;right:40px;bottom:90%;width:min(205px,56vw);margin:0;padding:10px 12px;border-radius:14px;border:1px solid var(--glass);background:var(--card);color:var(--foreground);box-shadow:var(--window-shadow);font-size:12px;line-height:1.45;text-align:left;pointer-events:auto;cursor:pointer;animation:bee-pop .3s ease both}
+.bee-bubble small{display:block;margin-top:5px;font-size:10px;color:var(--muted-foreground)}
+.bee-bubble::after{content:"";position:absolute;right:135px;bottom:-7px;width:12px;height:12px;background:var(--card);border-right:1px solid var(--glass);border-bottom:1px solid var(--glass);transform:rotate(45deg)}
+@keyframes bee-pop{from{opacity:0;transform:translateY(6px) scale(.96)}}
+@media(max-width:600px){.sunflowers-meadow{display:none}.sunflowers-bee{right:auto;left:-6px;height:105px;max-width:none}.sunflowers-bee>img{object-position:left bottom}.bee-bubble{right:auto;left:28%;bottom:70%}.bee-bubble::after{right:auto;left:10%}}
