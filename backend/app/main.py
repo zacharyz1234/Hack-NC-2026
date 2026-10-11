@@ -15,6 +15,7 @@ from app.routes import (
     health,
     nessie,
     savings_goals,
+    stocks,
     transactions,
 )
 
@@ -38,6 +39,7 @@ app.include_router(expenses.router)
 app.include_router(nessie.router)
 app.include_router(assistant.router)
 app.include_router(consents.router)
+app.include_router(stocks.router)
 
 
 @app.on_event("startup")

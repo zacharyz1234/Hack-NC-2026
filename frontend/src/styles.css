@@ -1,6 +1,13 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+
+.market-ranking-heading{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px;color:var(--primary-foreground);text-shadow:0 1px 2px var(--foreground)}
+.market-ranking-heading h3{font-weight:700;font-size:16px}.market-ranking-heading span{font-size:11px}
+.market-leader{text-align:left;min-width:0;cursor:pointer}.market-leader small{overflow-wrap:anywhere}.market-leader:disabled{cursor:default}.market-leader:focus-visible{outline:2px solid var(--primary);outline-offset:3px}.market-leader p{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.market-ranking-status{margin:-8px 0 18px;padding:9px 12px;background:var(--soft-gloss);border:1px solid var(--border);border-radius:5px;font-size:11px;line-height:1.6}
+.market-data-notice{padding:10px 12px;background:var(--secondary);border:1px solid var(--border);border-radius:5px;font-size:12px;line-height:1.6}
+.stock-company .quote-timestamp{font-size:10px;max-width:260px}.stock-results button{max-width:100%;white-space:normal;height:auto;min-height:30px;text-align:left}
 @custom-variant dark (&:is(.dark *));
 @theme inline {
  --font-sans: "Tahoma", "Segoe UI", sans-serif;

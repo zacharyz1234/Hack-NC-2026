@@ -12,6 +12,10 @@ ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
 ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "JBFqnCBsd6RMkjVDRZzb")  # placeholder premade voice
 ELEVENLABS_MODEL_ID = os.getenv("ELEVENLABS_MODEL_ID", "eleven_flash_v2_5")
 NESSIE_API_KEY = os.getenv("NESSIE_API_KEY", "")
+TWELVE_DATA_API_KEY = os.getenv("TWELVE_DATA_API_KEY", "")
+# Set this to the actual plan allowance. The hourly full-market scan fetches
+# all listed stocks in one burst, plus capacity for searches and selected stocks.
+TWELVE_DATA_CREDITS_PER_MINUTE = int(os.getenv("TWELVE_DATA_CREDITS_PER_MINUTE", "8"))
 DB_PATH = os.getenv("DB_PATH", "app.db")
 
 # Frontend origins allowed by CORS: local dev servers plus Lovable previews/deploys
